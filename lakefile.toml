@@ -1,0 +1,10 @@
+name = "fp-lean"
+version = "0.1.0"
+defaultTargets = ["fp-lean"]
+
+[[lean_lib]]
+name = "Fp.Lean"
+
+[[lean_exe]]
+name = "fp-lean"
+root = "Main"
