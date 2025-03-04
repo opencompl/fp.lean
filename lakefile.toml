@@ -3,7 +3,7 @@ version = "0.1.0"
 defaultTargets = ["fp-lean"]
 
 [[lean_lib]]
-name = "Fp.Lean"
+name = "Fp"
 
 [[lean_exe]]
 name = "fp-lean"

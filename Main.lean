@@ -1,4 +1,4 @@
-import Fp.Lean
+import Fp.Basic
 
 #eval (2 + 3)
 #check Int
