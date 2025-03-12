@@ -1,20 +1,23 @@
 import Fp.Utils
 
-def hello : String := "hello"
-
 /-!
-
 ## Packed Floating Point Numbers
 
+This is a test module description
 -/
+
+inductive Sign : Type
+| Positive : Sign
+| Negative : Sign
+deriving DecidableEq, Repr
 
 /--
 A packed floating point number,
 whose exponent and significand width are encoded at the type level.
 -/
-structure PackedFloat (exWidth : Nat) (sigWidth : Nat) where
+structure PackedFloat (exWidth sigWidth : Nat) where
     /-- Sign bit. -/
-    sign : BitVec 1
+    sign : Sign
     /-- Exponent of the packed float. -/
     ex : BitVec exWidth
     /-- Significand (mantissa) of the packed float. -/
@@ -24,16 +27,20 @@ deriving DecidableEq, Repr
 
 /--
 A fixed point number with specified exponent offset.
-
-NOTE: Current implementation may not account for data stored within NaNs.
 -/
-structure FixedPoint (width : Nat) (exOffset : Nat) where
-    sign : BitVec 1
-    infinite : BitVec 1
-    nan : BitVec 1
+structure FixedPoint (width exOffset : Nat) where
+    sign : Sign
     val : BitVec width
     hExOffset : exOffset < width
+deriving DecidableEq, Repr
 
+/--
+A fixed point number extended with infinity and NaN.
+-/
+inductive EFixedPoint (width exOffset : Nat) : Type
+| NaN : EFixedPoint width exOffset
+| Infinity : Sign -> EFixedPoint width exOffset
+| Number : FixedPoint width exOffset -> EFixedPoint width exOffset
 deriving DecidableEq, Repr
 
 namespace PackedFloat
@@ -41,8 +48,8 @@ namespace PackedFloat
 Returns the "canonical" NaN for the given floating point format. For example, the canonical NaN for `exWidth` and `sigWidth` 4 is
 `0.1111.1000`.
 -/
-def nan (exWidth : Nat) (sigWidth : Nat) : PackedFloat exWidth sigWidth where
-  sign := 0#1
+def getNaN (exWidth sigWidth : Nat) : PackedFloat exWidth sigWidth where
+  sign := Sign.Positive
   ex := BitVec.allOnes exWidth
   sig := BitVec.ofNat sigWidth (2 ^ (sigWidth - 1))
 
@@ -54,6 +61,7 @@ def isNaN (pf : PackedFloat e s) : Bool :=
 
 def isZeroOrSubnorm (pf : PackedFloat e s) : Bool :=
   pf.ex == BitVec.zero e
+
 
 /--
 Convert from a packed float to a fixed point number.
@@ -67,27 +75,87 @@ cover the entire range of representable values. Some non-compliant formats have
 a slightly larger range of representable exponents, so we allow for two extra
 bits of precision.
 -/
-def toFixed (pf : PackedFloat e s) (he : 0 < e) : FixedPoint (2 ^ e + s) (2 ^ (e - 1) + s - 2) where
-  sign := pf.sign
-  infinite := BitVec.ofBool pf.isInfinite
-  nan := BitVec.ofBool pf.isNaN
-  val :=
-    let unshifted : BitVec (s+1) :=
-      BitVec.cons (!pf.isZeroOrSubnorm) (pf.sig);
-    BitVec.shiftLeft (BitVec.zeroExtend _ (unshifted)) (pf.ex.toNat - 1)
-  hExOffset := by
-    apply Nat.lt_of_le_of_lt (sub_two_lt)
-    apply Nat.add_lt_add_right
-    exact Nat.two_pow_pred_lt_two_pow he
+def toEFixed (pf : PackedFloat e s) (he : 0 < e)
+  : EFixedPoint (2 ^ e + s) (2 ^ (e - 1) + s - 2) :=
+  if pf.isNaN then EFixedPoint.NaN
+  else if pf.isInfinite then EFixedPoint.Infinity pf.sign
+  else EFixedPoint.Number {
+    sign := pf.sign
+    val :=
+      let unshifted : BitVec (s+1) :=
+        BitVec.cons (!pf.isZeroOrSubnorm) (pf.sig);
+      BitVec.shiftLeft (BitVec.zeroExtend _ (unshifted)) (pf.ex.toNat - 1)
+    hExOffset := by
+      apply Nat.lt_of_le_of_lt (sub_two_lt)
+      apply Nat.add_lt_add_right
+      exact Nat.two_pow_pred_lt_two_pow he
+  }
+
+def getValOrNone (pf : PackedFloat e s) (he : 0 < e)
+  : Option Nat :=
+  match toEFixed pf he with
+  | EFixedPoint.NaN => none
+  | EFixedPoint.Infinity _ => none
+  | EFixedPoint.Number f => some f.val.toNat
+
+end PackedFloat
+
+namespace EFixedPoint
+
+def zero (sigWidth exWidth : Nat) (hExOffset : sigWidth < exWidth) : EFixedPoint exWidth sigWidth :=
+  EFixedPoint.Number {
+    sign := Sign.Positive
+    val := BitVec.zero _
+    hExOffset := hExOffset
+  }
+
+end EFixedPoint
+
+-- Temp playground
+
+def oneE5M2 : PackedFloat 5 2 where
+  ex := 15#5
+  sig := 0#2
+  sign := Sign.Positive
+
+#eval (repr oneE5M2)
+
+def minNormE5M2 : PackedFloat 5 2 where
+  ex := 1#5
+  sig := 0#2
+  sign := Sign.Positive
+
+def minDenormE5M2 : PackedFloat 5 2 where
+  ex := 0#5
+  sig := 1#2
+  sign := Sign.Positive
+
+#check PackedFloat.toEFixed
+#eval (PackedFloat.getNaN 5 2)
+#eval oneE5M2.toEFixed (by omega)
+#eval minDenormE5M2.toEFixed (by omega)
+#eval minNormE5M2.toEFixed (by omega)
+
+-- Sanity checks
+theorem fixed_of_minDenormE5M2_is_0b1
+  : PackedFloat.getValOrNone minDenormE5M2 (by omega) = some 1 := by
+  simp [minDenormE5M2, PackedFloat.getValOrNone,
+        PackedFloat.toEFixed, PackedFloat.isNaN, PackedFloat.isInfinite,
+        PackedFloat.isZeroOrSubnorm]
+
+theorem fixed_of_minNormE5M2_is_0b100
+  : PackedFloat.getValOrNone minNormE5M2 (by omega) = some 4 := by
+  rfl
 
 
-/-# Contents of File
+/-
+# To-do list
 
 - @bollu assigns assignment: Setup CI! (done)
 - Create a document of this that can be shown to Tobias without shame
 - Definitions of PackedFloat and FixedPoint representations (done)
   + Add a sign bit to FixedPoint
-- Conversion from PackedFloat to FixedPoint
+- Conversion from PackedFloat to FixedPoint (done, mostly)
 - (next step: in another file called Fp.FixedPoint, create addition)
 - Show floating point addition is commutative
   + Do conversion back to floating point
@@ -102,36 +170,3 @@ def toFixed (pf : PackedFloat e s) (he : 0 < e) : FixedPoint (2 ^ e + s) (2 ^ (e
   interprets the FP as a rational.
 
 -/
-end PackedFloat
-
--- Temp playground
-
-def oneE5M2 : PackedFloat 5 2 where
-  ex := 15#5
-  sig := 0#2
-  sign := 0#1
-
-#eval (repr oneE5M2)
-
-def minNormE5M2 : PackedFloat 5 2 where
-  ex := 1#5
-  sig := 0#2
-  sign := 0#1
-
-def minDenormE5M2 : PackedFloat 5 2 where
-  ex := 0#5
-  sig := 1#2
-  sign := 0#1
-
-#check PackedFloat.toFixed
-#eval (PackedFloat.nan 5 2)
-#eval oneE5M2.toFixed (by omega)
-#eval minDenormE5M2.toFixed (by omega)
-#eval minNormE5M2.toFixed (by omega)
-
--- Sanity checks
-theorem fixed_of_minDenormE5M2_is_0b1 : (minDenormE5M2.toFixed (by omega)).val.toNat = 1 := by
-  rfl
-
-theorem fixed_of_minNormE5M2_is_0b100 : (minNormE5M2.toFixed (by omega)).val.toNat = 4 := by
-  rfl
