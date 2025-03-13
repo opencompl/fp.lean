@@ -48,10 +48,8 @@ theorem EFixedPoint_eq_refl (a : EFixedPoint 16 8)
     (ha : a.isNaN = false) : a.equal a = true := by
   simp [EFixedPoint.isNaN] at ha
   simp [EFixedPoint.equal]
-  cases a
-  case NaN => simp at ha
-  case Infinity => simp
-  case Number a => simp
+  -- cases a <;> simp_all
+  bv_decide -- unexpected bound variable #1
 
 -- TODO: addition of non-NaN fixed point is commutative
 theorem EFixedPoint_add_comm (a b : EFixedPoint 16 8)
