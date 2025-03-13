@@ -53,6 +53,12 @@ def getNaN (exWidth sigWidth : Nat) : PackedFloat exWidth sigWidth where
   ex := BitVec.allOnes exWidth
   sig := BitVec.ofNat sigWidth (2 ^ (sigWidth - 1))
 
+def getInfinity (exWidth sigWidth : Nat) (sign : Sign)
+  : PackedFloat exWidth sigWidth where
+  sign := sign
+  ex := BitVec.allOnes exWidth
+  sig := BitVec.zero sigWidth
+
 def isInfinite (pf : PackedFloat e s) : Bool :=
   pf.ex == BitVec.allOnes e && pf.sig == BitVec.zero s
 
@@ -84,7 +90,10 @@ def toEFixed (pf : PackedFloat e s) (he : 0 < e)
     val :=
       let unshifted : BitVec (s+1) :=
         BitVec.cons (!pf.isZeroOrSubnorm) (pf.sig);
-      BitVec.shiftLeft (BitVec.zeroExtend _ (unshifted)) (pf.ex.toNat - 1)
+      let hS : s + 1 <= 2^e + s := by
+        rewrite [Nat.add_comm]
+        apply Nat.add_le_add_right Nat.one_le_two_pow s
+      BitVec.shiftLeft (BitVec.setWidth' hS (unshifted)) (pf.ex.toNat - 1)
     hExOffset := by
       apply Nat.lt_of_le_of_lt (sub_two_lt)
       apply Nat.add_lt_add_right
@@ -102,12 +111,23 @@ end PackedFloat
 
 namespace EFixedPoint
 
-def zero (sigWidth exWidth : Nat) (hExOffset : sigWidth < exWidth) : EFixedPoint exWidth sigWidth :=
+def zero (sigWidth exWidth : Nat) (hExOffset : sigWidth < exWidth)
+  : EFixedPoint exWidth sigWidth :=
   EFixedPoint.Number {
     sign := Sign.Positive
     val := BitVec.zero _
     hExOffset := hExOffset
   }
+
+def equal (a b : EFixedPoint w e) : Bool :=
+  match a, b with
+  | Infinity s1, Infinity s2 => s1 = s2
+  | Number a, Number b =>
+    (a.val == 0 && b.val == 0) || (a.sign == b.sign && a.val == b.val)
+  | _, _ => false
+
+def isNaN : EFixedPoint w e -> Bool
+  | NaN => true | _ => false
 
 end EFixedPoint
 
