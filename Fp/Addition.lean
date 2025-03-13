@@ -44,13 +44,14 @@ def test_zero := EFixedPoint.zero 8 16 (by omega)
 theorem test : test_zero.equal test_zero = true := by
   simp [test_zero, EFixedPoint.zero, EFixedPoint.equal]
 
-theorem EFixedPoint_eq_refl (a : EFixedPoint 16 8) (ha : a.isNaN = false)
-  : a.equal a = true := by
-  cases a
+theorem EFixedPoint_eq_refl (a : EFixedPoint 16 8) 
+    (ha : a.isNaN = false) : a.equal a = true := by
   simp [EFixedPoint.isNaN] at ha
   simp [EFixedPoint.equal]
-  sorry
-  --bv_decide
+  cases a
+  case NaN => simp at ha
+  case Infinity => simp
+  case Number a => simp
 
 -- TODO: addition of non-NaN fixed point is commutative
 theorem EFixedPoint_add_comm (a b : EFixedPoint 16 8)

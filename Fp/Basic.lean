@@ -126,7 +126,7 @@ def equal (a b : EFixedPoint w e) : Bool :=
     (a.val == 0 && b.val == 0) || (a.sign == b.sign && a.val == b.val)
   | _, _ => false
 
-def isNaN : EFixedPoint w e -> Bool
+def isNaN : EFixedPoint w e → Bool
   | NaN => true | _ => false
 
 end EFixedPoint
