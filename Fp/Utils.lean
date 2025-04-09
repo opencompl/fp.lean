@@ -1,3 +1,5 @@
+import Std.Tactic.BVDecide
+
 -- Exponent bias typically follows the below standard forumula
 def exBias_of_exWidth (exWidth : Nat) : Nat :=
   2 ^ (exWidth - 1) - 1

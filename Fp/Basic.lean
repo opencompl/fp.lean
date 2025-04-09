@@ -5,11 +5,12 @@ import Fp.Utils
 
 This is a test module description
 -/
-
+/-
 inductive Sign : Type
 | Positive : Sign
 | Negative : Sign
 deriving DecidableEq, Repr
+-/
 
 /--
 A packed floating point number,
@@ -17,7 +18,7 @@ whose exponent and significand width are encoded at the type level.
 -/
 structure PackedFloat (exWidth sigWidth : Nat) where
     /-- Sign bit. -/
-    sign : Sign
+    sign : Bool
     /-- Exponent of the packed float. -/
     ex : BitVec exWidth
     /-- Significand (mantissa) of the packed float. -/
@@ -29,19 +30,25 @@ deriving DecidableEq, Repr
 A fixed point number with specified exponent offset.
 -/
 structure FixedPoint (width exOffset : Nat) where
-    sign : Sign
+    sign : Bool
     val : BitVec width
     hExOffset : exOffset < width
 deriving DecidableEq, Repr
+
+-- Concretely, any enum we have must look like a C enum, so we must flatten
+-- all our state into a single enum.
 
 /--
 A fixed point number extended with infinity and NaN.
 -/
 inductive EFixedPoint (width exOffset : Nat) : Type
 | NaN : EFixedPoint width exOffset
-| Infinity : Sign -> EFixedPoint width exOffset
+| Infinity : Bool -> EFixedPoint width exOffset
 | Number : FixedPoint width exOffset -> EFixedPoint width exOffset
 deriving DecidableEq, Repr
+
+structure EFixedPoint' (width exOffset : Nat) where
+  sign : Bool
 
 namespace PackedFloat
 /--
@@ -49,11 +56,11 @@ Returns the "canonical" NaN for the given floating point format. For example, th
 `0.1111.1000`.
 -/
 def getNaN (exWidth sigWidth : Nat) : PackedFloat exWidth sigWidth where
-  sign := Sign.Positive
+  sign := False
   ex := BitVec.allOnes exWidth
   sig := BitVec.ofNat sigWidth (2 ^ (sigWidth - 1))
 
-def getInfinity (exWidth sigWidth : Nat) (sign : Sign)
+def getInfinity (exWidth sigWidth : Nat) (sign : Bool)
   : PackedFloat exWidth sigWidth where
   sign := sign
   ex := BitVec.allOnes exWidth
@@ -109,12 +116,22 @@ def getValOrNone (pf : PackedFloat e s) (he : 0 < e)
 
 end PackedFloat
 
+namespace FixedPoint
+theorem injEq (a b : FixedPoint w e)
+  : (a.sign = b.sign ∧ a.val = b.val) = (a = b) := by
+  bv_decide
+
+theorem inj (a b : FixedPoint w e)
+  : (a.sign = b.sign ∧ a.val = b.val) → (a = b) := by
+  simp [injEq]
+end FixedPoint
+
 namespace EFixedPoint
 
 def zero (sigWidth exWidth : Nat) (hExOffset : sigWidth < exWidth)
   : EFixedPoint exWidth sigWidth :=
   EFixedPoint.Number {
-    sign := Sign.Positive
+    sign := False
     val := BitVec.zero _
     hExOffset := hExOffset
   }
@@ -136,19 +153,19 @@ end EFixedPoint
 def oneE5M2 : PackedFloat 5 2 where
   ex := 15#5
   sig := 0#2
-  sign := Sign.Positive
+  sign := False
 
 #eval (repr oneE5M2)
 
 def minNormE5M2 : PackedFloat 5 2 where
   ex := 1#5
   sig := 0#2
-  sign := Sign.Positive
+  sign := False
 
 def minDenormE5M2 : PackedFloat 5 2 where
   ex := 0#5
   sig := 1#2
-  sign := Sign.Positive
+  sign := False
 
 #check PackedFloat.toEFixed
 #eval (PackedFloat.getNaN 5 2)
