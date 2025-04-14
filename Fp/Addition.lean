@@ -1,13 +1,7 @@
 import Fp.Basic
 import Lean.Elab.Tactic.BVDecide
 
-def fixedPoint_eq (a b : FixedPoint w e) : Bool :=
-  if a.sign != b.sign then
-    a.val == BitVec.zero _ && b.val == BitVec.zero _
-  else
-   a.val == b.val
-
-def fixedPoint_add (a b : FixedPoint w e) : FixedPoint (w+1) e :=
+def f_add (a b : FixedPoint w e) : FixedPoint (w+1) e :=
   let hExOffset : e < w+1 := by
     exact Nat.lt_add_right 1 a.hExOffset
   let ax := BitVec.setWidth' (by omega) a.val
@@ -39,62 +33,34 @@ def fixedPoint_add (a b : FixedPoint w e) : FixedPoint (w+1) e :=
       hExOffset := hExOffset
     }
 
-
-def add (a b : EFixedPoint w e) : EFixedPoint (w+1) e :=
+def e_add (a b : EFixedPoint w e) : EFixedPoint (w+1) e :=
   open EFixedPoint in
-  match a, b with
-  | NaN, _
-  | _ , NaN => NaN
-  | Infinity s, Infinity t =>
-    if s = t then Infinity s
-    else NaN
-  | Infinity s, _
-  | _, Infinity s => Infinity s
-  | Number a, Number b =>
-    EFixedPoint.Number (fixedPoint_add a b)
-
-def test_zero := EFixedPoint.zero 8 16 (by omega)
-
-theorem FixedPoint_eq_refl (a : FixedPoint w e)
-  : (fixedPoint_eq a a) = true := by
-  simp [fixedPoint_eq]
+  let hExOffset : e < w + 1 := by
+    exact Nat.lt_add_right 1 a.num.hExOffset
+  -- As of 2025-04-14, bv_decide does not support pattern matches on more than
+  -- one variable, so we'll have to deal with if-statements for now
+  if hN : a.state = .NaN || b.state = .NaN then getNaN hExOffset else
+  if hI1 : a.state = .Infinity && b.state = .Infinity then
+    if a.num.sign == b.num.sign then getInfinity a.num.sign hExOffset
+    else getNaN hExOffset
+  else if hI2 : a.state = .Infinity then getInfinity a.num.sign hExOffset
+  else if hI3 : b.state = .Infinity then getInfinity b.num.sign hExOffset
+  else
+  -- is this how to do assertions?
+  let _ : a.state = .Number && b.state = .Number := by bv_decide
+  {
+    state := .Number
+    num := f_add a.num b.num
+  }
 
 theorem FixedPoint_add_comm (a b : FixedPoint 16 8)
-  : (fixedPoint_add a b) = (fixedPoint_add b a) := by
-  simp [fixedPoint_add]
-  apply FixedPoint.inj
+  : (f_add a b).equal (f_add b a) := by
+  simp [f_add, FixedPoint.equal]
   bv_decide
 
-theorem FixedPoint_add_comm2 (a b : FixedPoint 16 8)
-  : fixedPoint_eq (fixedPoint_add a b) (fixedPoint_add b a) := by
-  simp [FixedPoint_add_comm]
-  exact FixedPoint_eq_refl _
-
-theorem test : test_zero.equal test_zero = true := by
-  simp [test_zero, EFixedPoint.zero, EFixedPoint.equal]
-
--- TODO: addition of non-NaN fixed point is commutative
 theorem EFixedPoint_add_comm (a b : EFixedPoint 16 8)
-  (ha : a.isNaN = false) (hb : b.isNaN = false)
-  : (add a b).equal (add b a) = true := by
-  simp [EFixedPoint.isNaN] at ha hb
-  simp [add, EFixedPoint.equal]
-  sorry
-  --bv_decide
-
-
-def or_test (a b : Bool) : FixedPoint 16 8 :=
-  if a == b then
-  { sign := a
-    val := BitVec.zero _
-    hExOffset := by omega }
-  else
-  { sign := True
-    val := BitVec.zero _
-    hExOffset := by omega }
-
-theorem or_test_eq_or (a b : Bool) : (or_test a b).sign = a || b := by
-  simp [or_test]
+  : (e_add a b).equal_or_nan (e_add b a) := by
+  open EFixedPoint in
+  simp [e_add, equal_or_nan, equal, getNaN, getInfinity,
+        f_add, FixedPoint.equal]
   bv_decide
-
-#version

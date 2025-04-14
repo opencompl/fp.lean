@@ -38,17 +38,19 @@ deriving DecidableEq, Repr
 -- Concretely, any enum we have must look like a C enum, so we must flatten
 -- all our state into a single enum.
 
+inductive State : Type
+| NaN : State
+| Infinity : State
+| Number : State
+deriving DecidableEq, Repr
+
 /--
 A fixed point number extended with infinity and NaN.
 -/
-inductive EFixedPoint (width exOffset : Nat) : Type
-| NaN : EFixedPoint width exOffset
-| Infinity : Bool -> EFixedPoint width exOffset
-| Number : FixedPoint width exOffset -> EFixedPoint width exOffset
+structure EFixedPoint (width exOffset : Nat) where
+  state : State
+  num : FixedPoint width exOffset
 deriving DecidableEq, Repr
-
-structure EFixedPoint' (width exOffset : Nat) where
-  sign : Bool
 
 namespace PackedFloat
 /--
@@ -64,16 +66,16 @@ def getInfinity (exWidth sigWidth : Nat) (sign : Bool)
   : PackedFloat exWidth sigWidth where
   sign := sign
   ex := BitVec.allOnes exWidth
-  sig := BitVec.zero sigWidth
+  sig := 0
 
 def isInfinite (pf : PackedFloat e s) : Bool :=
-  pf.ex == BitVec.allOnes e && pf.sig == BitVec.zero s
+  pf.ex == BitVec.allOnes e && pf.sig == 0
 
 def isNaN (pf : PackedFloat e s) : Bool :=
-  pf.ex == BitVec.allOnes e && pf.sig != BitVec.zero s
+  pf.ex == BitVec.allOnes e && pf.sig != 0
 
 def isZeroOrSubnorm (pf : PackedFloat e s) : Bool :=
-  pf.ex == BitVec.zero e
+  pf.ex == 0
 
 
 /--
@@ -90,33 +92,55 @@ bits of precision.
 -/
 def toEFixed (pf : PackedFloat e s) (he : 0 < e)
   : EFixedPoint (2 ^ e + s) (2 ^ (e - 1) + s - 2) :=
-  if pf.isNaN then EFixedPoint.NaN
-  else if pf.isInfinite then EFixedPoint.Infinity pf.sign
-  else EFixedPoint.Number {
-    sign := pf.sign
-    val :=
-      let unshifted : BitVec (s+1) :=
-        BitVec.cons (!pf.isZeroOrSubnorm) (pf.sig);
-      let hS : s + 1 <= 2^e + s := by
-        rewrite [Nat.add_comm]
-        apply Nat.add_le_add_right Nat.one_le_two_pow s
-      BitVec.shiftLeft (BitVec.setWidth' hS (unshifted)) (pf.ex.toNat - 1)
-    hExOffset := by
+  let hExOffset : 2 ^ (e - 1) + s - 2 < 2 ^ e + s := by
       apply Nat.lt_of_le_of_lt (sub_two_lt)
       apply Nat.add_lt_add_right
       exact Nat.two_pow_pred_lt_two_pow he
+  if pf.isNaN then {
+    state := .NaN
+    num := {
+      sign := False
+      val := 0
+      hExOffset
+    }
+  }
+  else if pf.isInfinite then {
+    state := .Infinity
+    num := {
+      sign := pf.sign
+      val := 0
+      hExOffset
+    }
+  }
+  else {
+    state := .Number
+    num := {
+      sign := pf.sign
+      val :=
+        let unshifted : BitVec (s+1) :=
+          BitVec.cons (!pf.isZeroOrSubnorm) (pf.sig);
+        let hs : s + 1 <= 2^e + s := by
+          rewrite [Nat.add_comm]
+          apply Nat.add_le_add_right Nat.one_le_two_pow s
+        BitVec.shiftLeft (BitVec.setWidth' hs (unshifted)) (pf.ex.toNat - 1)
+      hExOffset
+    }
   }
 
 def getValOrNone (pf : PackedFloat e s) (he : 0 < e)
   : Option Nat :=
-  match toEFixed pf he with
-  | EFixedPoint.NaN => none
-  | EFixedPoint.Infinity _ => none
-  | EFixedPoint.Number f => some f.val.toNat
+  let result := toEFixed pf he
+  match result.state with
+  | .NaN | .Infinity => none
+  | .Number => some result.num.val.toNat
 
 end PackedFloat
 
 namespace FixedPoint
+def equal (a b : FixedPoint w e) : Bool :=
+  (a.val == BitVec.zero _ && b.val == BitVec.zero _)
+  || (a.sign == b.sign && a.val == b.val)
+
 theorem injEq (a b : FixedPoint w e)
   : (a.sign = b.sign ∧ a.val = b.val) = (a = b) := by
   bv_decide
@@ -124,27 +148,56 @@ theorem injEq (a b : FixedPoint w e)
 theorem inj (a b : FixedPoint w e)
   : (a.sign = b.sign ∧ a.val = b.val) → (a = b) := by
   simp [injEq]
+
+theorem equal_refl (a : FixedPoint w e)
+  : (a.equal a) = true := by
+  simp [FixedPoint.equal]
+
+theorem equal_comm (a b : FixedPoint w e)
+  : (a.equal b) = (b.equal a) := by
+  simp [equal, Bool.beq_comm]
+  ac_nf
+
 end FixedPoint
 
 namespace EFixedPoint
 
-def zero (sigWidth exWidth : Nat) (hExOffset : sigWidth < exWidth)
-  : EFixedPoint exWidth sigWidth :=
-  EFixedPoint.Number {
+def getNaN (hExOffset : sigWidth < exWidth)
+  : EFixedPoint exWidth sigWidth where
+  state := .NaN
+  num := {
     sign := False
-    val := BitVec.zero _
-    hExOffset := hExOffset
+    val := 0
+    hExOffset
+  }
+
+def getInfinity (sign : Bool) (hExOffset : sigWidth < exWidth)
+  : EFixedPoint exWidth sigWidth where
+  state := .Infinity
+  num := {
+    sign
+    val := 0
+    hExOffset
+  }
+
+def zero (exWidth sigWidth : Nat) (hExOffset : sigWidth < exWidth)
+  : EFixedPoint exWidth sigWidth where
+  state := .Number
+  num := {
+    sign := False
+    val := 0
+    hExOffset
   }
 
 def equal (a b : EFixedPoint w e) : Bool :=
-  match a, b with
-  | Infinity s1, Infinity s2 => s1 = s2
-  | Number a, Number b =>
-    (a.val == 0 && b.val == 0) || (a.sign == b.sign && a.val == b.val)
-  | _, _ => false
+  (a.state = .Infinity && b.state = .Infinity && a.num.sign == b.num.sign) ||
+  (a.state = .Number && b.state = .Number && a.num.equal b.num)
 
-def isNaN : EFixedPoint w e → Bool
-  | NaN => true | _ => false
+def equal_or_nan (a b : EFixedPoint w e) : Bool :=
+  a.state = .NaN || b.state = .NaN || a.equal b
+
+def isNaN (a : EFixedPoint w e) : Bool :=
+  a.state == .NaN
 
 end EFixedPoint
 

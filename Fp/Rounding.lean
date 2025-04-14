@@ -9,8 +9,5 @@ inductive RoundingMode : Type
 
 -- TODO: Implement different rounding modes
 def round (exWidth sigWidth : Nat)
-  : EFixedPoint width exOffset -> PackedFloat exWidth sigWidth
-  | EFixedPoint.NaN => PackedFloat.getNaN _ _
-  | EFixedPoint.Infinity sign => PackedFloat.getInfinity _ _ sign
-  | EFixedPoint.Number x =>
+  : EFixedPoint width exOffset -> PackedFloat exWidth sigWidth :=
   sorry
