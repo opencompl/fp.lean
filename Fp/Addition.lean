@@ -39,15 +39,16 @@ def e_add (a b : EFixedPoint w e) : EFixedPoint (w+1) e :=
     exact Nat.lt_add_right 1 a.num.hExOffset
   -- As of 2025-04-14, bv_decide does not support pattern matches on more than
   -- one variable, so we'll have to deal with if-statements for now
-  if hN : a.state = .NaN || b.state = .NaN then getNaN hExOffset else
-  if hI1 : a.state = .Infinity && b.state = .Infinity then
+  if hN : a.state = .NaN || b.state = .NaN then getNaN hExOffset
+  else if hI1 : a.state = .Infinity && b.state = .Infinity then
     if a.num.sign == b.num.sign then getInfinity a.num.sign hExOffset
     else getNaN hExOffset
   else if hI2 : a.state = .Infinity then getInfinity a.num.sign hExOffset
   else if hI3 : b.state = .Infinity then getInfinity b.num.sign hExOffset
   else
   -- is this how to do assertions?
-  let _ : a.state = .Number && b.state = .Number := by bv_decide
+  let _ : a.state = .Number && b.state = .Number := by
+    cases ha : a.state <;> cases hb : b.state <;> simp_all
   {
     state := .Number
     num := f_add a.num b.num
