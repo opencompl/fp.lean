@@ -68,15 +68,17 @@ def getInfinity (exWidth sigWidth : Nat) (sign : Bool)
   ex := BitVec.allOnes exWidth
   sig := 0
 
+@[simp]
 def isInfinite (pf : PackedFloat e s) : Bool :=
   pf.ex == BitVec.allOnes e && pf.sig == 0
 
+@[simp]
 def isNaN (pf : PackedFloat e s) : Bool :=
   pf.ex == BitVec.allOnes e && pf.sig != 0
 
+@[simp]
 def isZeroOrSubnorm (pf : PackedFloat e s) : Bool :=
   pf.ex == 0
-
 
 /--
 Convert from a packed float to a fixed point number.
@@ -117,12 +119,12 @@ def toEFixed (pf : PackedFloat e s) (he : 0 < e)
     num := {
       sign := pf.sign
       val :=
-        let unshifted : BitVec (s+1) :=
-          BitVec.cons (!pf.isZeroOrSubnorm) (pf.sig);
-        let hs : s + 1 <= 2^e + s := by
-          rewrite [Nat.add_comm]
-          apply Nat.add_le_add_right Nat.one_le_two_pow s
-        BitVec.shiftLeft (BitVec.setWidth' hs (unshifted)) (pf.ex.toNat - 1)
+        let unshifted : BitVec (1+s) :=
+          (BitVec.ofBool !pf.isZeroOrSubnorm) ++ pf.sig;
+        let shift : BitVec e := if pf.ex = 0 then 0 else pf.ex - 1
+        let hs : 1 + s <= 2^e + s := by
+          exact Nat.add_le_add_right Nat.one_le_two_pow s
+        (BitVec.setWidth' hs (unshifted)) <<< shift
       hExOffset
     }
   }
@@ -137,6 +139,7 @@ def getValOrNone (pf : PackedFloat e s) (he : 0 < e)
 end PackedFloat
 
 namespace FixedPoint
+@[simp]
 def equal (a b : FixedPoint w e) : Bool :=
   (a.val == BitVec.zero _ && b.val == BitVec.zero _)
   || (a.sign == b.sign && a.val == b.val)
@@ -161,7 +164,7 @@ theorem equal_comm (a b : FixedPoint w e)
 end FixedPoint
 
 namespace EFixedPoint
-
+@[simp]
 def getNaN (hExOffset : sigWidth < exWidth)
   : EFixedPoint exWidth sigWidth where
   state := .NaN
@@ -171,6 +174,7 @@ def getNaN (hExOffset : sigWidth < exWidth)
     hExOffset
   }
 
+@[simp]
 def getInfinity (sign : Bool) (hExOffset : sigWidth < exWidth)
   : EFixedPoint exWidth sigWidth where
   state := .Infinity
@@ -180,6 +184,7 @@ def getInfinity (sign : Bool) (hExOffset : sigWidth < exWidth)
     hExOffset
   }
 
+@[simp]
 def zero (exWidth sigWidth : Nat) (hExOffset : sigWidth < exWidth)
   : EFixedPoint exWidth sigWidth where
   state := .Number
@@ -189,13 +194,16 @@ def zero (exWidth sigWidth : Nat) (hExOffset : sigWidth < exWidth)
     hExOffset
   }
 
+@[simp]
 def equal (a b : EFixedPoint w e) : Bool :=
   (a.state = .Infinity && b.state = .Infinity && a.num.sign == b.num.sign) ||
   (a.state = .Number && b.state = .Number && a.num.equal b.num)
 
+@[simp]
 def equal_or_nan (a b : EFixedPoint w e) : Bool :=
   a.state = .NaN || b.state = .NaN || a.equal b
 
+@[simp]
 def isNaN (a : EFixedPoint w e) : Bool :=
   a.state == .NaN
 
@@ -230,8 +238,7 @@ def minDenormE5M2 : PackedFloat 5 2 where
 theorem fixed_of_minDenormE5M2_is_0b1
   : PackedFloat.getValOrNone minDenormE5M2 (by omega) = some 1 := by
   simp [minDenormE5M2, PackedFloat.getValOrNone,
-        PackedFloat.toEFixed, PackedFloat.isNaN, PackedFloat.isInfinite,
-        PackedFloat.isZeroOrSubnorm]
+        PackedFloat.toEFixed]
 
 theorem fixed_of_minNormE5M2_is_0b100
   : PackedFloat.getValOrNone minNormE5M2 (by omega) = some 4 := by

@@ -56,12 +56,11 @@ def e_add (a b : EFixedPoint w e) : EFixedPoint (w+1) e :=
 
 theorem FixedPoint_add_comm (a b : FixedPoint 16 8)
   : (f_add a b).equal (f_add b a) := by
-  simp [f_add, FixedPoint.equal]
+  simp [f_add]
   bv_decide
 
 theorem EFixedPoint_add_comm (a b : EFixedPoint 16 8)
   : (e_add a b).equal_or_nan (e_add b a) := by
   open EFixedPoint in
-  simp [e_add, equal_or_nan, equal, getNaN, getInfinity,
-        f_add, FixedPoint.equal]
+  simp [e_add, f_add]
   bv_decide
