@@ -57,16 +57,33 @@ namespace PackedFloat
 Returns the "canonical" NaN for the given floating point format. For example, the canonical NaN for `exWidth` and `sigWidth` 4 is
 `0.1111.1000`.
 -/
+@[simp]
 def getNaN (exWidth sigWidth : Nat) : PackedFloat exWidth sigWidth where
   sign := False
   ex := BitVec.allOnes exWidth
   sig := BitVec.ofNat sigWidth (2 ^ (sigWidth - 1))
 
+@[simp]
 def getInfinity (exWidth sigWidth : Nat) (sign : Bool)
   : PackedFloat exWidth sigWidth where
   sign := sign
   ex := BitVec.allOnes exWidth
   sig := 0
+
+@[simp]
+def getZero (exWidth sigWidth : Nat)
+  : PackedFloat exWidth sigWidth where
+  sign := False
+  ex := 0
+  sig := 0
+
+theorem injEq (a b : PackedFloat e s)
+  : (a.sign = b.sign ∧ a.ex = b.ex ∧ a.sig = b.sig) = (a = b) := by
+  bv_decide
+
+theorem inj (a b : PackedFloat e s)
+  : (a.sign = b.sign ∧ a.ex = b.ex ∧ a.sig = b.sig) → (a = b) := by
+  simp [injEq]
 
 @[simp]
 def isInfinite (pf : PackedFloat e s) : Bool :=
@@ -185,7 +202,7 @@ def getInfinity (sign : Bool) (hExOffset : sigWidth < exWidth)
   }
 
 @[simp]
-def zero (exWidth sigWidth : Nat) (hExOffset : sigWidth < exWidth)
+def zero (hExOffset : sigWidth < exWidth)
   : EFixedPoint exWidth sigWidth where
   state := .Number
   num := {
