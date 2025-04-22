@@ -1,5 +1,5 @@
 import Fp.Basic
-import Lean.Elab.Tactic.BVDecide
+import Fp.Rounding
 
 def f_add (a b : FixedPoint w e) : FixedPoint (w+1) e :=
   let hExOffset : e < w+1 := by
@@ -54,6 +54,9 @@ def e_add (a b : EFixedPoint w e) : EFixedPoint (w+1) e :=
     num := f_add a.num b.num
   }
 
+def add (he : 0 < e) (a b : PackedFloat e s) : PackedFloat e s :=
+  round _ _ (e_add (PackedFloat.toEFixed a he) (PackedFloat.toEFixed b he))
+
 theorem FixedPoint_add_comm (a b : FixedPoint 16 8)
   : (f_add a b).equal (f_add b a) := by
   simp [f_add]
@@ -64,3 +67,7 @@ theorem EFixedPoint_add_comm (a b : EFixedPoint 16 8)
   open EFixedPoint in
   simp [e_add, f_add]
   bv_decide
+
+theorem PackedFloat_add_comm (a b : PackedFloat 3 2)
+  : (add (by omega) a b) = (add (by omega) b a) := by
+  sorry
