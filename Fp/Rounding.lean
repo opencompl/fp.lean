@@ -82,12 +82,12 @@ def round (exWidth sigWidth : Nat) (x : EFixedPoint width exOffset)
 
 -- Theorem: Fixed -> Float is left inverse to Float -> Fixed
 -- Can go up to 4, 1 without overflow erroring
-theorem round_leftinv_toEFixed (x : PackedFloat 5 1) (hx : ¬ x.isNaN):
+theorem round_leftinv_toEFixed (x : PackedFloat 5 2) (hx : ¬ x.isNaN):
   (round _ _ (PackedFloat.toEFixed x (by omega))) = x := by
   apply PackedFloat.inj
   simp at hx
   simp [round, fls, fls', PackedFloat.toEFixed, -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
-  sorry
+  bv_decide
 
 -- Test threorems to see if bv_decide works
 theorem fls_b (b : BitVec 7) :
@@ -98,8 +98,7 @@ theorem fls_b (b : BitVec 7) :
 theorem round_b (b : FixedPoint 3 1) :
   (round 5 1 { state := .Number, num := b }).ex ≠ BitVec.allOnes _ := by
   simp [round, fls, fls']
-  sorry-- deep recursion detected
-  -- bv_decide fails here
+  bv_decide
 
 theorem toEFixed_test (f : PackedFloat 5 2)
   : (PackedFloat.toEFixed f (by omega)).num.val ≠ 60 := by

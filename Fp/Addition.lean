@@ -68,6 +68,8 @@ theorem EFixedPoint_add_comm (a b : EFixedPoint 16 8)
   simp [e_add, f_add]
   bv_decide
 
-theorem PackedFloat_add_comm (a b : PackedFloat 3 2)
+theorem PackedFloat_add_comm (a b : PackedFloat 5 2)
   : (add (by omega) a b) = (add (by omega) b a) := by
-  sorry
+  apply PackedFloat.inj
+  simp [add, e_add, f_add, round, fls, fls', PackedFloat.toEFixed, -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
+  bv_check "Addition.lean-PackedFloat_add_comm-75-2.lrat"
