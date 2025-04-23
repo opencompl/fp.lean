@@ -73,5 +73,7 @@ theorem add_monotone (a b c : PackedFloat 5 2) (hc : c.isNormOrSubnorm)
   : le a b → le (add (by omega) a c) (add (by omega) b c) := by
   intro h
   apply le_of_e_le
-  apply EFixedPoint_add_monotone _ _ _ (PackedFloat.isNumber_of_isNormOrSubnorm c hc)
+  have hc' : (c.toEFixed (by omega)).state = .Number :=
+    PackedFloat.isNumber_of_isNormOrSubnorm c hc
+  apply EFixedPoint_add_monotone _ _ _ hc'
   exact e_le_of_le _ _ h
