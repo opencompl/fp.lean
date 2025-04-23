@@ -15,3 +15,4 @@ _ [Kahan Floating Point Paranoia](https://people.math.sc.edu/Burkardt/c_src/para
 #### Floating Point Docs
 
 - [2020-2021 Floating Point Course @ Cambridge](https://www.cl.cam.ac.uk/teaching/1011/FPComp/)
+- Numerical Computing with IEEE Floating Point Arithmetic by Michael L. Overton.
