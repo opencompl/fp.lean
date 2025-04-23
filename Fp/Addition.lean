@@ -55,21 +55,20 @@ def e_add (a b : EFixedPoint w e) : EFixedPoint (w+1) e :=
   }
 
 def add (he : 0 < e) (a b : PackedFloat e s) : PackedFloat e s :=
-  round _ _ (e_add (PackedFloat.toEFixed a he) (PackedFloat.toEFixed b he))
+  round _ _ (e_add (a.toEFixed he) (b.toEFixed he))
 
 theorem FixedPoint_add_comm (a b : FixedPoint 16 8)
   : (f_add a b).equal (f_add b a) := by
   simp [f_add]
-  bv_decide
+  bv_decide +acNf
 
 theorem EFixedPoint_add_comm (a b : EFixedPoint 16 8)
   : (e_add a b).equal_or_nan (e_add b a) := by
-  open EFixedPoint in
   simp [e_add, f_add]
-  bv_decide
+  bv_decide +acNf
 
 theorem PackedFloat_add_comm (a b : PackedFloat 5 2)
   : (add (by omega) a b) = (add (by omega) b a) := by
   apply PackedFloat.inj
-  simp [add, e_add, f_add, round, fls, fls', PackedFloat.toEFixed, -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
+  simp [add, e_add, f_add, round, PackedFloat.toEFixed, -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
   bv_check "Addition.lean-PackedFloat_add_comm-75-2.lrat"

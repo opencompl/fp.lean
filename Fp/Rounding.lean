@@ -7,10 +7,10 @@ inductive RoundingMode : Type
 | RTN : RoundingMode -- RoundTowardNegative
 | RTZ : RoundingMode -- RoundTowardZero
 
--- Does tail recursion help? :P
+@[simp]
 def fls' (m : Nat) (b : BitVec n) (hm : n ≤ m) : BitVec m :=
   if n = 0 then 0
-  else if BitVec.msb b then n
+  else if b.msb then n
   else fls' m (BitVec.truncate (n-1) b) (by omega)
   termination_by n
 
@@ -19,8 +19,9 @@ Find the position of the last (most significant) set bit in a BitVec.
 
 Returns zero if BitVec is zero. Otherwise, returns the index starting from 1.
 -/
+@[simp]
 def fls (b : BitVec n) : BitVec n :=
-  fls' n b (Nat.le_refl n)
+  fls' n b (n.le_refl)
 
 #eval fls 0x10#8
 
@@ -83,29 +84,29 @@ def round (exWidth sigWidth : Nat) (x : EFixedPoint width exOffset)
 -- Theorem: Fixed -> Float is left inverse to Float -> Fixed
 -- Can go up to 4, 1 without overflow erroring
 theorem round_leftinv_toEFixed (x : PackedFloat 5 2) (hx : ¬ x.isNaN):
-  (round _ _ (PackedFloat.toEFixed x (by omega))) = x := by
+  (round _ _ (x.toEFixed (by omega))) = x := by
   apply PackedFloat.inj
   simp at hx
-  simp [round, fls, fls', PackedFloat.toEFixed, -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
+  simp [round, PackedFloat.toEFixed, -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
   bv_decide
 
 -- Test threorems to see if bv_decide works
 theorem fls_b (b : BitVec 7) :
   fls (fls b) <= 5 := by
-  simp [fls, fls']
+  simp
   bv_decide
 
 theorem round_b (b : FixedPoint 3 1) :
   (round 5 1 { state := .Number, num := b }).ex ≠ BitVec.allOnes _ := by
-  simp [round, fls, fls']
+  simp [round]
   bv_decide
 
 theorem toEFixed_test (f : PackedFloat 5 2)
-  : (PackedFloat.toEFixed f (by omega)).num.val ≠ 60 := by
+  : (f.toEFixed (by omega)).num.val ≠ 60 := by
   simp [PackedFloat.toEFixed, -BitVec.shiftLeft_eq']
   bv_decide
 
 theorem getSignificand_append_truncate_test (v : BitVec 5)
   : (BitVec.truncate 3 v.reverse).reverse = truncateRight 3 v := by
-  simp [truncateRight, BitVec.reverse, BitVec.concat]
+  simp [BitVec.reverse, BitVec.concat]
   bv_decide

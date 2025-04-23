@@ -79,11 +79,14 @@ def getZero (exWidth sigWidth : Nat)
 
 theorem injEq (a b : PackedFloat e s)
   : (a.sign = b.sign ∧ a.ex = b.ex ∧ a.sig = b.sig) = (a = b) := by
-  bv_decide
+  cases a
+  cases b
+  simp [mk.injEq]
 
 theorem inj (a b : PackedFloat e s)
   : (a.sign = b.sign ∧ a.ex = b.ex ∧ a.sig = b.sig) → (a = b) := by
-  simp [injEq]
+  intro h
+  simp_all only [injEq]
 
 @[simp]
 def isInfinite (pf : PackedFloat e s) : Bool :=
@@ -163,11 +166,14 @@ def equal (a b : FixedPoint w e) : Bool :=
 
 theorem injEq (a b : FixedPoint w e)
   : (a.sign = b.sign ∧ a.val = b.val) = (a = b) := by
-  bv_decide
+  cases a
+  cases b
+  simp only [mk.injEq]
 
 theorem inj (a b : FixedPoint w e)
   : (a.sign = b.sign ∧ a.val = b.val) → (a = b) := by
-  simp [injEq]
+  intro h
+  simp_all only [injEq]
 
 theorem equal_refl (a : FixedPoint w e)
   : (a.equal a) = true := by
@@ -181,6 +187,19 @@ theorem equal_comm (a b : FixedPoint w e)
 end FixedPoint
 
 namespace EFixedPoint
+theorem injEq (a b : EFixedPoint w e)
+  : (a.state = b.state ∧ a.num.sign = b.num.sign ∧ a.num.val = b.num.val)
+      = (a = b) := by
+  cases a
+  cases b
+  simp only [FixedPoint.injEq, mk.injEq]
+
+theorem inj (a b : EFixedPoint w e)
+  : (a.state = b.state ∧ a.num.sign = b.num.sign ∧ a.num.val = b.num.val)
+      → (a = b) := by
+  intro h
+  simp_all only [injEq]
+
 @[simp]
 def getNaN (hExOffset : sigWidth < exWidth)
   : EFixedPoint exWidth sigWidth where
