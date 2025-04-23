@@ -27,6 +27,7 @@ def f_add (a b : FixedPoint w e) : FixedPoint (w+1) e :=
     }
   else
     -- Signs are different but values are same, so return +0.0
+    -- TODO: actually when rounding mode is RTN we should return -0.0
     {
       sign := False
       val := BitVec.zero _

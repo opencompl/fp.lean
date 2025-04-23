@@ -97,8 +97,16 @@ def isNaN (pf : PackedFloat e s) : Bool :=
   pf.ex == BitVec.allOnes e && pf.sig != 0
 
 @[simp]
+def isNormOrSubnorm (pf : PackedFloat e s) : Bool :=
+  pf.ex != BitVec.allOnes e
+
+@[simp]
 def isZeroOrSubnorm (pf : PackedFloat e s) : Bool :=
   pf.ex == 0
+
+@[simp]
+def isZero (pf : PackedFloat e s) : Bool :=
+  pf.ex == 0 && pf.sig == 0
 
 /--
 Convert from a packed float to a fixed point number.
@@ -155,6 +163,11 @@ def getValOrNone (pf : PackedFloat e s) (he : 0 < e)
   match result.state with
   | .NaN | .Infinity => none
   | .Number => some result.num.val.toNat
+
+theorem isNumber_of_isNormOrSubnorm (a : PackedFloat e s)
+  : a.isNormOrSubnorm → (a.toEFixed he).state = .Number := by
+  cases a
+  simp_all [toEFixed]
 
 end PackedFloat
 
@@ -242,7 +255,6 @@ def equal_or_nan (a b : EFixedPoint w e) : Bool :=
 @[simp]
 def isNaN (a : EFixedPoint w e) : Bool :=
   a.state == .NaN
-
 end EFixedPoint
 
 -- Temp playground
