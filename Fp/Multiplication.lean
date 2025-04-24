@@ -28,23 +28,24 @@ def e_mul (a : EFixedPoint v e) (b : EFixedPoint w f) : EFixedPoint (v+w) (e+f) 
 def mul (he : 0 < e) (a b : PackedFloat e s) : PackedFloat e s :=
   round _ _ (e_mul (a.toEFixed he) (b.toEFixed he))
 
-theorem FixedPoint_mul_comm (a b : FixedPoint 34 16)
+-- Bitblasting multiplication is a bit too hard, so we'll prove these theorems
+-- manually
+theorem f_mul_comm (a b : FixedPoint 34 16)
   : (f_mul a b) = (f_mul b a) := by
-  simp [f_mul]
-  bv_decide +acNf
+  simp [f_mul, Bool.xor_comm, BitVec.mul_comm]
 
-theorem EFixedPoint_mul_comm (a b : EFixedPoint 34 16)
+theorem e_mul_comm (a b : EFixedPoint 34 16)
   : (e_mul a b) = (e_mul b a) := by
   simp [e_mul]
   cases ha2 : a.state <;> cases hb2 : b.state <;>
-    simp_all [Bool.xor_comm, FixedPoint_mul_comm]
+    simp_all [Bool.xor_comm, f_mul_comm]
 
-theorem EFixedPoint_mul_comm_brute (a b : EFixedPoint 4 2)
+theorem mul_comm_brute (a b : EFixedPoint 4 2)
   : (e_mul a b) = (e_mul b a) := by
   apply EFixedPoint.inj
   simp [e_mul, f_mul]
   bv_decide +acNf
 
-theorem PackedFloat_mul_comm (a b : PackedFloat 5 2)
+theorem mul_comm (a b : PackedFloat 5 2)
   : (mul (by omega) a b) = (mul (by omega) b a) := by
-  simp [mul, EFixedPoint_mul_comm]
+  simp [mul, e_mul_comm]
