@@ -25,6 +25,10 @@ structure PackedFloat (exWidth sigWidth : Nat) where
     sig : BitVec sigWidth
 deriving DecidableEq, Repr
 
+instance : Repr (PackedFloat exWidth sigWidth) where
+  reprPrec x _prec :=
+    f!"\{ sign := {if x.sign then "-" else "+"}, ex := {x.ex}, sig := {x.sig} }"
+
 
 /--
 A fixed point number with specified exponent offset.
@@ -33,7 +37,11 @@ structure FixedPoint (width exOffset : Nat) where
     sign : Bool
     val : BitVec width
     hExOffset : exOffset < width
-deriving DecidableEq, Repr
+deriving DecidableEq
+
+instance : Repr (FixedPoint width ExOffset) where
+  reprPrec (x : FixedPoint _ _) _prec :=
+    f!"{if x.sign then "-" else "+"} {x.val}"
 
 -- Concretely, any enum we have must look like a C enum, so we must flatten
 -- all our state into a single enum.
@@ -42,7 +50,14 @@ inductive State : Type
 | NaN : State
 | Infinity : State
 | Number : State
-deriving DecidableEq, Repr
+deriving DecidableEq
+
+instance : Repr State where
+  reprPrec s _prec :=
+    match s with
+    | .NaN => "NaN"
+    | .Infinity => "∞"
+    | .Number => "num"
 
 /--
 A fixed point number extended with infinity and NaN.
@@ -53,6 +68,7 @@ structure EFixedPoint (width exOffset : Nat) where
 deriving DecidableEq, Repr
 
 namespace PackedFloat
+
 /--
 Returns the "canonical" NaN for the given floating point format. For example, the canonical NaN for `exWidth` and `sigWidth` 4 is
 `0.1111.1000`.
@@ -243,6 +259,10 @@ def zero (hExOffset : sigWidth < exWidth)
     hExOffset
   }
 
+/--
+Floating point equality test.
+Recall that `NaN ≠ Nan` under the floating point semantics.
+-/
 @[simp]
 def equal (a b : EFixedPoint w e) : Bool :=
   (a.state = .Infinity && b.state = .Infinity && a.num.sign == b.num.sign) ||
@@ -252,10 +272,32 @@ def equal (a b : EFixedPoint w e) : Bool :=
 def equal_or_nan (a b : EFixedPoint w e) : Bool :=
   a.state = .NaN || b.state = .NaN || a.equal b
 
+/--
+Floating point equality test,
+where we check upto denotation. So, under this definition:
+- NaN = Nan iff thestates are both Nan.
+- +Infinity = +Infinity, -Infinity = -Infinity.
+- Number equality is reflexive.
+-/
+@[simp]
+def equal_denotation (a b : EFixedPoint w e) : Bool :=
+  (a.state = .NaN && b.state = .NaN) ||
+  (a.state = .Infinity && b.state = .Infinity && a.num.sign == b.num.sign) ||
+  (a.state = .Number && b.state = .Number && a.num.equal b.num)
+
 @[simp]
 def isNaN (a : EFixedPoint w e) : Bool :=
   a.state == .NaN
+
+/-- Map a function on the fixed point of the extended fixed point. -/
+def map (f : FixedPoint width exOffset → FixedPoint width' exOffset') (x : EFixedPoint width exOffset) :
+    EFixedPoint width' exOffset' where
+  state := x.state
+  num := f x.num
+
 end EFixedPoint
+
+namespace Tests
 
 -- Temp playground
 
@@ -264,7 +306,8 @@ def oneE5M2 : PackedFloat 5 2 where
   sig := 0#2
   sign := False
 
-#eval (repr oneE5M2)
+/-- info: { sign := +, ex := 0x0f#5, sig := 0x0#2 } -/
+#guard_msgs in #eval (repr oneE5M2)
 
 def minNormE5M2 : PackedFloat 5 2 where
   ex := 1#5
@@ -276,11 +319,15 @@ def minDenormE5M2 : PackedFloat 5 2 where
   sig := 1#2
   sign := False
 
-#check PackedFloat.toEFixed
-#eval (PackedFloat.getNaN 5 2)
-#eval oneE5M2.toEFixed (by omega)
-#eval minDenormE5M2.toEFixed (by omega)
-#eval minNormE5M2.toEFixed (by omega)
+/-- info: { sign := +, ex := 0x1f#5, sig := 0x2#2 } -/
+#guard_msgs in #eval (PackedFloat.getNaN 5 2)
+/-- info: { state := num, num := + 0x000010000#34 } -/
+#guard_msgs in #eval oneE5M2.toEFixed (by omega)
+/-- info: { state := num, num := + 0x000000001#34 } -/
+#guard_msgs in #eval minDenormE5M2.toEFixed (by omega)
+/-- info: { state := num, num := + 0x000000004#34 } -/
+#guard_msgs in #eval minNormE5M2.toEFixed (by omega)
+
 
 -- Sanity checks
 theorem fixed_of_minDenormE5M2_is_0b1
@@ -292,6 +339,7 @@ theorem fixed_of_minNormE5M2_is_0b100
   : PackedFloat.getValOrNone minNormE5M2 (by omega) = some 4 := by
   rfl
 
+end Tests
 
 /-
 # To-do list
