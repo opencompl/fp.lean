@@ -25,8 +25,9 @@ def e_mul (a : EFixedPoint v e) (b : EFixedPoint w f) : EFixedPoint (v+w) (e+f) 
       num := f_mul a.num b.num
     }
 
-def mul (he : 0 < e) (a b : PackedFloat e s) : PackedFloat e s :=
-  round _ _ (e_mul (a.toEFixed he) (b.toEFixed he))
+def mul
+  (he : 0 < e) (a b : PackedFloat e s) (m : RoundingMode) : PackedFloat e s :=
+  round _ _ m (e_mul (a.toEFixed he) (b.toEFixed he))
 
 -- Bitblasting multiplication is a bit too hard, so we'll prove these theorems
 -- manually
@@ -46,6 +47,6 @@ theorem mul_comm_brute (a b : EFixedPoint 4 2)
   simp [e_mul, f_mul]
   bv_decide +acNf
 
-theorem mul_comm (a b : PackedFloat 5 2)
-  : (mul (by omega) a b) = (mul (by omega) b a) := by
+theorem mul_comm (a b : PackedFloat 5 2) (m : RoundingMode)
+  : (mul (by omega) a b m) = (mul (by omega) b a m) := by
   simp [mul, e_mul_comm]
