@@ -40,12 +40,27 @@ def truncateRight (w : Nat) (v : BitVec n) : BitVec w :=
   else
     BitVec.truncate w (v >>> (n-w))
 
+@[simp]
+def shouldRoundAway (m : RoundingMode)
+  (sign : Bool) (odd : Bool) (v : BitVec n) : Bool :=
+  let isZero := v = 0
+  let nearDown := ¬v.msb
+  let tied := v.msb ∧ v.truncate (n-1) = 0
+  let nearUp := ¬nearDown ∧ ¬tied
+  match m with
+  | .RNE => nearUp ∨ (odd ∧ tied)
+  | .RNA => ¬nearDown
+  | .RTP => ¬isZero ∧ ¬sign
+  | .RTN => ¬isZero ∧ sign
+  | .RTZ => False
+
 #eval truncateRight 4 0xaf#8
 #eval truncateRight 16 0xaf#8
 
 -- TODO: Implement different rounding modes
 -- Less well-behaved when exWidth = 0. This shouldn't be an issue?
-def round (exWidth sigWidth : Nat) (x : EFixedPoint width exOffset)
+def round
+  (exWidth sigWidth : Nat) (mode : RoundingMode) (x : EFixedPoint width exOffset)
   : PackedFloat exWidth sigWidth :=
   if x.state == .NaN then
     PackedFloat.getNaN _ _
@@ -55,9 +70,10 @@ def round (exWidth sigWidth : Nat) (x : EFixedPoint width exOffset)
     let exOffset' := 2^(exWidth - 1) + sigWidth - 2
     -- trim bitvector
     let over := x.num.val >>> (exOffset + 2^(exWidth-1))
-    let a := BitVec.truncate (2^(exWidth-1)) (x.num.val >>> exOffset)
-    let b := truncateRight exOffset' (BitVec.truncate exOffset x.num.val)
-    let _under := BitVec.truncate (exOffset - exOffset') x.num.val
+    let a := (x.num.val >>> exOffset).truncate (2^(exWidth-1))
+    let b := truncateRight exOffset' (x.num.val.truncate exOffset)
+    let underWidth := exOffset - exOffset'
+    let under := x.num.val.truncate underWidth
     let trimmed := a ++ b
     if over != 0 then
       -- Overflow to Infinity
@@ -65,26 +81,47 @@ def round (exWidth sigWidth : Nat) (x : EFixedPoint width exOffset)
     else
     let index := fls trimmed
     let sigWidthB := BitVec.ofNat _ sigWidth
-    if index ≤ sigWidthB then
-      -- denormal
-      {
-        sign := x.num.sign
-        ex := 0
-        sig := BitVec.truncate _ trimmed
-      }
+    let ex : BitVec exWidth :=
+      if index ≤ sigWidthB then
+        0
+      else
+        (index - sigWidthB).truncate _
+    let truncSig : BitVec sigWidth :=
+      if ex = 0 then
+        trimmed.truncate _
+      else
+        (trimmed >>> (ex - 1)).truncate _
+    let rem : BitVec (sigWidth + underWidth) :=
+      if ex = 0 then
+        under.truncate _ <<< sigWidth
+      else
+        (truncateRight _ trimmed <<< (sigWidth - (ex - 1))) |||
+        (under.truncate _ <<< (sigWidth - (ex - 1)))
+    if shouldRoundAway mode x.num.sign (truncSig.getLsbD 0) rem then
+      if truncSig = BitVec.allOnes _ then
+        -- overflow to next exponent
+        {
+          sign := x.num.sign
+          ex := ex+1
+          sig := 0
+        }
+      else
+        {
+          sign := x.num.sign
+          ex
+          sig := truncSig + 1
+        }
     else
-      let ex := BitVec.truncate _ (index - sigWidthB)
-      -- Normal
-      {
-        sign := x.num.sign
-        ex
-        sig := BitVec.truncate _ (trimmed >>> (ex - 1#_))
-      }
+    {
+      sign := x.num.sign
+      ex
+      sig := truncSig
+    }
 
 -- Theorem: Fixed -> Float is left inverse to Float -> Fixed
 -- Can go up to 4, 1 without overflow erroring
-theorem round_leftinv_toEFixed (x : PackedFloat 5 2) (hx : ¬ x.isNaN):
-  (round _ _ (x.toEFixed (by omega))) = x := by
+theorem round_leftinv_toEFixed (x : PackedFloat 5 2) (mode : RoundingMode) (hx : ¬ x.isNaN):
+  (round _ _ mode (x.toEFixed (by omega))) = x := by
   apply PackedFloat.inj
   simp at hx
   simp [round, PackedFloat.toEFixed, -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
@@ -96,8 +133,8 @@ theorem fls_b (b : BitVec 7) :
   simp
   bv_decide
 
-theorem round_b (b : FixedPoint 3 1) :
-  (round 5 1 { state := .Number, num := b }).ex ≠ BitVec.allOnes _ := by
+theorem round_b (b : FixedPoint 3 1) (mode : RoundingMode) :
+  (round 5 1 mode { state := .Number, num := b }).ex ≠ BitVec.allOnes _ := by
   simp [round]
   bv_decide
 

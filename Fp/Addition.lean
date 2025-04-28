@@ -55,24 +55,15 @@ def e_add (a b : EFixedPoint w e) : EFixedPoint (w+1) e :=
     num := f_add a.num b.num
   }
 
-def add (he : 0 < e) (a b : PackedFloat e s) : PackedFloat e s :=
-  round _ _ (e_add (a.toEFixed he) (b.toEFixed he))
+def add (he : 0 < e) (a b : PackedFloat e s) (mode : RoundingMode) : PackedFloat e s :=
+  round _ _ mode (e_add (a.toEFixed he) (b.toEFixed he))
 
-theorem FixedPoint_add_comm' (a b : FixedPoint 16 8)
-  : (f_add a b).equal (f_add b a) := by
-  simp [f_add]
-  bv_decide +acNf
-
-theorem EFixedPoint_add_comm' (a b : EFixedPoint 16 8)
-  : (e_add a b).equal_or_nan (e_add b a) := by
-  simp [e_add, f_add]
-  bv_decide +acNf
-
-theorem PackedFloat_add_comm' (a b : PackedFloat 5 2)
-  : (add (by omega) a b) = (add (by omega) b a) := by
+-- Proof by brute force
+theorem PackedFloat_add_comm' (m : RoundingMode) (a b : PackedFloat 5 2)
+  : (add (by omega) a b m) = (add (by omega) b a m) := by
   apply PackedFloat.inj
   simp [add, e_add, f_add, round, PackedFloat.toEFixed, -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
-  bv_check "Addition.lean-PackedFloat_add_comm-75-2.lrat"
+  bv_check "Addition.lean-PackedFloat_add_comm'-75-2.lrat"
 
 theorem f_add_comm (a b : FixedPoint 34 16)
   : (f_add a b) = (f_add b a) := by
@@ -86,6 +77,6 @@ theorem e_add_comm (a b : EFixedPoint 34 16)
   cases ha2 : a.state <;> cases hb2 : b.state <;>
     simp <;> simp_all only [eq_comm, f_add_comm]
 
-theorem add_comm (a b : PackedFloat 5 2)
-  : (add (by omega) a b) = (add (by omega) b a) := by
+theorem add_comm (m : RoundingMode) (a b : PackedFloat 5 2)
+  : (add (by omega) a b m) = (add (by omega) b a m) := by
   simp [add, e_add_comm]
