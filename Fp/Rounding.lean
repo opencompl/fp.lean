@@ -6,6 +6,15 @@ inductive RoundingMode : Type
 | RTP : RoundingMode -- RoundTowardPositive
 | RTN : RoundingMode -- RoundTowardNegative
 | RTZ : RoundingMode -- RoundTowardZero
+deriving DecidableEq
+
+instance : Repr RoundingMode where
+  reprPrec m _ := match m with
+  | .RNA => "RNA"
+  | .RNE => "RNE"
+  | .RTN => "RTN"
+  | .RTP => "RTP"
+  | .RTZ => "RTZ"
 
 @[simp]
 def fls' (m : Nat) (b : BitVec n) (hm : n ≤ m) : BitVec m :=
@@ -43,15 +52,13 @@ def truncateRight (w : Nat) (v : BitVec n) : BitVec w :=
 @[simp]
 def shouldRoundAway (m : RoundingMode)
   (sign : Bool) (odd : Bool) (v : BitVec n) : Bool :=
-  let isZero := v = 0
-  let nearDown := ¬v.msb
-  let tied := v.msb ∧ v.truncate (n-1) = 0
-  let nearUp := ¬nearDown ∧ ¬tied
+  let guard := v.msb
+  let sticky := v.truncate (n-1) ≠ 0
   match m with
-  | .RNE => nearUp ∨ (odd ∧ tied)
-  | .RNA => ¬nearDown
-  | .RTP => ¬isZero ∧ ¬sign
-  | .RTN => ¬isZero ∧ sign
+  | .RNE => guard ∧ (sticky ∨ odd)
+  | .RNA => guard
+  | .RTP => (guard ∨ sticky) ∧ ¬sign
+  | .RTN => (guard ∨ sticky) ∧ sign
   | .RTZ => False
 
 #eval truncateRight 4 0xaf#8
@@ -95,7 +102,7 @@ def round
       if ex = 0 then
         under.truncate _ <<< sigWidth
       else
-        (truncateRight _ trimmed <<< (sigWidth - (ex - 1))) |||
+        truncateRight _ (trimmed <<< (1<<<exWidth + sigWidth - 2 - (ex - 1))) |||
         (under.truncate _ <<< (sigWidth - (ex - 1)))
     if shouldRoundAway mode x.num.sign (truncSig.getLsbD 0) rem then
       if truncSig = BitVec.allOnes _ then

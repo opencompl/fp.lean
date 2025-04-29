@@ -58,12 +58,14 @@ def e_add (a b : EFixedPoint w e) : EFixedPoint (w+1) e :=
 def add (he : 0 < e) (a b : PackedFloat e s) (mode : RoundingMode) : PackedFloat e s :=
   round _ _ mode (e_add (a.toEFixed he) (b.toEFixed he))
 
--- Proof by brute force
+-- Proof by brute force (it takes a while)
+/-
 theorem PackedFloat_add_comm' (m : RoundingMode) (a b : PackedFloat 5 2)
   : (add (by omega) a b m) = (add (by omega) b a m) := by
   apply PackedFloat.inj
   simp [add, e_add, f_add, round, PackedFloat.toEFixed, -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
-  bv_check "Addition.lean-PackedFloat_add_comm'-75-2.lrat"
+  bv_decide
+-/
 
 theorem f_add_comm (a b : FixedPoint 34 16)
   : (f_add a b) = (f_add b a) := by
@@ -80,3 +82,8 @@ theorem e_add_comm (a b : EFixedPoint 34 16)
 theorem add_comm (m : RoundingMode) (a b : PackedFloat 5 2)
   : (add (by omega) a b m) = (add (by omega) b a m) := by
   simp [add, e_add_comm]
+
+/-- info: { sign := +, ex := 0x04#5, sig := 0x0#2 } -/
+#guard_msgs in #eval add (by omega) (PackedFloat.ofBits 5 2 0b10000100#8) (PackedFloat.ofBits 5 2 0b00010001#8) .RNE
+/-- info: { sign := +, ex := 0x04#5, sig := 0x1#2 } -/
+#guard_msgs in #eval add (by omega) (PackedFloat.ofBits 5 2 0b10000100#8) (PackedFloat.ofBits 5 2 0b00010001#8) .RNA
