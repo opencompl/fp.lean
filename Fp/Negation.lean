@@ -15,8 +15,8 @@ def e_neg (a : EFixedPoint w e) : EFixedPoint w e :=
   else
     { a with num := f_neg a.num }
 
-def neg (he : 0 < e) (a : PackedFloat e s) : PackedFloat e s :=
-  round _ _ (e_neg (a.toEFixed he))
+def neg (he : 0 < e) (a : PackedFloat e s) (mode : RoundingMode) : PackedFloat e s :=
+  round _ _ mode (e_neg (a.toEFixed he))
 
 theorem FixedPoint_neg_involutive (a : FixedPoint 16 8)
   : f_neg (f_neg a) = a := by
