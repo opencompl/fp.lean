@@ -289,12 +289,6 @@ def equal_denotation (a b : EFixedPoint w e) : Bool :=
 def isNaN (a : EFixedPoint w e) : Bool :=
   a.state == .NaN
 
-/-- Map a function on the fixed point of the extended fixed point. -/
-def map (f : FixedPoint width exOffset → FixedPoint width' exOffset') (x : EFixedPoint width exOffset) :
-    EFixedPoint width' exOffset' where
-  state := x.state
-  num := f x.num
-
 end EFixedPoint
 
 namespace Tests
