@@ -124,6 +124,16 @@ def isZeroOrSubnorm (pf : PackedFloat e s) : Bool :=
 def isZero (pf : PackedFloat e s) : Bool :=
   pf.ex == 0 && pf.sig == 0
 
+@[simp]
+def ofBits (e s : Nat) (b : BitVec (1+e+s)) : PackedFloat e s where
+  sign := b.msb
+  ex := (b >>> s).truncate e
+  sig := b.truncate s
+
+@[simp]
+def toBits (x : PackedFloat e s) : BitVec (1+e+s) :=
+  BitVec.ofBool x.sign ++ x.ex ++ x.sig
+
 /--
 Convert from a packed float to a fixed point number.
 
@@ -295,23 +305,14 @@ namespace Tests
 
 -- Temp playground
 
-def oneE5M2 : PackedFloat 5 2 where
-  ex := 15#5
-  sig := 0#2
-  sign := False
+def oneE5M2 : PackedFloat 5 2 := PackedFloat.ofBits 5 2 0b00111100#8
 
 /-- info: { sign := +, ex := 0x0f#5, sig := 0x0#2 } -/
 #guard_msgs in #eval (repr oneE5M2)
 
-def minNormE5M2 : PackedFloat 5 2 where
-  ex := 1#5
-  sig := 0#2
-  sign := False
+def minNormE5M2 := PackedFloat.ofBits 5 2 0b00000100#8
 
-def minDenormE5M2 : PackedFloat 5 2 where
-  ex := 0#5
-  sig := 1#2
-  sign := False
+def minDenormE5M2 := PackedFloat.ofBits 5 2 0b00000001#8
 
 /-- info: { sign := +, ex := 0x1f#5, sig := 0x2#2 } -/
 #guard_msgs in #eval (PackedFloat.getNaN 5 2)
@@ -336,24 +337,6 @@ theorem fixed_of_minNormE5M2_is_0b100
 end Tests
 
 /-
-# To-do list
-
-- @bollu assigns assignment: Setup CI! (done)
-- Create a document of this that can be shown to Tobias without shame
-- Definitions of PackedFloat and FixedPoint representations (done)
-  + Add a sign bit to FixedPoint
-- Conversion from PackedFloat to FixedPoint (done, mostly)
-- (next step: in another file called Fp.FixedPoint, create addition)
-- Show floating point addition is commutative
-  + Do conversion back to floating point
-    * Implement some sort of rounding
-    * Implement re-packing FixedPoint -> PackedFloat
-  + Implement equality for floating point
-  + Implement round-trip rounded floating point addition
-  + Prove f1 + f2 = f2 + f1 by asking bv_decide
-- Show that fixed -> float conversion is left inverse to float -> fixed ('sorry' for now).
-  + Exclude NaN of course
 - (@bollu's thought): We may like to have `FixedPoint.toRat : FixedPoint → ℚ`, which
   interprets the FP as a rational.
-
 -/
