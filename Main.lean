@@ -3,6 +3,7 @@ import Fp.Rounding
 import Fp.Addition
 import Fp.Multiplication
 import Fp.Comparison
+import Fp.Division
 
 -- Idk how to prove in general
 theorem ofBits_inv_toBits (x : PackedFloat 5 2)
@@ -34,6 +35,15 @@ def test_add (m : RoundingMode) (a b : BitVec 8) : OpResult :=
     oper := "add"
     mode := m
     result := [a, b, PackedFloat.toBits (add (by omega) a' b' m)].map toDigits
+  }
+
+def test_div (m : RoundingMode) (a b : BitVec 8) : OpResult :=
+  let a' := PackedFloat.ofBits 5 2 a
+  let b' := PackedFloat.ofBits 5 2 b
+  {
+    oper := "div"
+    mode := m
+    result := [a, b, PackedFloat.toBits (div a' b' m)].map toDigits
   }
 
 def test_mul (m : RoundingMode) (a b : BitVec 8) : OpResult :=
@@ -68,6 +78,7 @@ def test_all : Unit → List OpResult := fun () =>
     test_binop test_add,
     test_binop test_lt,
     test_binop test_mul,
+    test_binop test_div
   ]
 
 def main : IO Unit := do
