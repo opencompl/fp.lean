@@ -184,6 +184,10 @@ namespace symfpu {
 
       // Could be improved to remove overflow concerns
       uint64_t minimumExponent = ((1 << (width - 1)) - 2) + (format.significandWidth() - 1);
+      // Hotfix for small significands
+      ++width;
+      assert(width != 5);
+      printf("width %ld\n", width);
 
       // Increase width until even the smallest subnormal can be normalised
       while ((1UL << (width - 1)) < minimumExponent) {
