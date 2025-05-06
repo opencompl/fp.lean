@@ -18,7 +18,7 @@ int main() {
   uf added(symfpu::add<traits>(format, traits::RNE(), unpacked1, unpacked2, traits::prop(true)));
   traits::ubv repacked(symfpu::pack<traits>(format, added));
 
-  printf("%x\n", repacked);
+  printf("%x\n", repacked.contents());
   return 0;
 }
 
