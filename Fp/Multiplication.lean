@@ -14,7 +14,9 @@ def f_mul (a : FixedPoint v e) (b : FixedPoint w f) : FixedPoint (v+w) (e+f) :=
 def e_mul (a : EFixedPoint v e) (b : EFixedPoint w f) : EFixedPoint (v+w) (e+f) :=
   let hExOffset := Nat.add_lt_add a.num.hExOffset b.num.hExOffset
   open EFixedPoint in
-  if hN : a.state = .NaN || b.state = .NaN then getNaN hExOffset
+  if hN : a.state = .NaN || b.state = .NaN ||
+      (a.state = .Infinity && b.isZero) ||
+      (b.state = .Infinity && a.isZero) then getNaN hExOffset
   else if hI1 : a.state = .Infinity || b.state = .Infinity then
     getInfinity (a.num.sign ^^ b.num.sign) hExOffset
   else

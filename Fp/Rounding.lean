@@ -98,12 +98,13 @@ def round
         trimmed.truncate _
       else
         (trimmed >>> (ex - 1)).truncate _
-    let rem : BitVec (sigWidth + underWidth) :=
+    let rem : BitVec (2^exWidth + underWidth) :=
       if ex = 0 then
-        under.truncate _ <<< sigWidth
+        under.truncate _ <<< (1<<<exWidth)
       else
-        truncateRight _ (trimmed <<< (1<<<exWidth + sigWidth - 2 - (ex - 1))) |||
-        (under.truncate _ <<< (sigWidth - (ex - 1)))
+        let totalShift : BitVec (exWidth+1) := ex.truncate _ - 1
+        truncateRight _ (trimmed <<< ((1<<<exWidth) + sigWidth - 2 - totalShift)) |||
+        (under.truncate _ <<< ((1<<<exWidth) - totalShift))
     if shouldRoundAway mode x.num.sign (truncSig.getLsbD 0) rem then
       if truncSig = BitVec.allOnes _ then
         -- overflow to next exponent
