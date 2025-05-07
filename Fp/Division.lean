@@ -44,9 +44,9 @@ def div_numbers (a b : PackedFloat e s) (mode : RoundingMode) : PackedFloat e s 
     round _ _ mode quot_rshift
 
 def div (a b : PackedFloat e s) (mode : RoundingMode) : PackedFloat e s :=
-  if a.isNaN ∨ b.isNaN ∨ b.isZero ∨ (a.isInfinite ∧ b.isInfinite) then
+  if a.isNaN ∨ b.isNaN ∨ (a.isInfinite ∧ b.isInfinite) ∨ (a.isZero ∧ b.isZero) then
     PackedFloat.getNaN _ _
-  else if a.isInfinite then
+  else if a.isInfinite ∨ b.isZero then
     PackedFloat.getInfinity _ _ (a.sign ^^ b.sign)
   else if b.isInfinite then
     { PackedFloat.getZero _ _ with sign := a.sign ^^ b.sign }

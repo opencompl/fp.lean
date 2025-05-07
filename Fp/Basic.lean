@@ -299,6 +299,10 @@ def equal_denotation (a b : EFixedPoint w e) : Bool :=
 def isNaN (a : EFixedPoint w e) : Bool :=
   a.state == .NaN
 
+@[simp]
+def isZero (a : EFixedPoint w e) : Bool :=
+  a.state == .Number && a.num.val == 0
+
 end EFixedPoint
 
 namespace Tests
