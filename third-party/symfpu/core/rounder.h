@@ -382,7 +382,8 @@ template <class t>
   
 
   /*** Round to correct significand. ***/
-  ubv extractedSignificand(sig.extract(sigWidth - 1, sigWidth - targetSignificandWidth).extend(1)); // extended to catch the overflow
+  // TODO: Unhack below line
+  ubv extractedSignificand(sig.extract(sigWidth - 1, sigWidth - targetSignificandWidth).extend(2)); // extended to catch the overflow
 
   // Normal guard and sticky bits
   bwt guardBitPosition(sigWidth - (targetSignificandWidth + 1));
@@ -402,7 +403,8 @@ template <class t>
 
   // Compute masks
   ubv subnormalMask(orderEncode<t>(subnormalShiftPrepared)); // Invariant implies this if all ones, it will not be used
-  ubv subnormalStickyMask(subnormalMask >> ubv::one(targetSignificandWidth + 1)); // +1 as the exponent is extended
+  ubv subnormalStickyMask(subnormalMask >> ubv::one(targetSignificandWidth + 2)); // +1 as the exponent is extended
+  // TODO: unhack above line as well
 
   // Apply
   ubv subnormalMaskedSignificand(extractedSignificand & (~subnormalMask));
@@ -413,8 +415,9 @@ template <class t>
   prop subnormalStickyBit(guardBit || stickyBit || 
 			  !((subnormalMaskRemoved & subnormalStickyMask).isAllZeros()));
 
-
-  ubv subnormalIncrementAmount((subnormalMask.modularLeftShift(ubv::one(targetSignificandWidth + 1))) & ~subnormalMask); // The only case when this looses info is earlyUnderflow
+  
+  // TODO: unhack below line
+  ubv subnormalIncrementAmount((subnormalMask.modularLeftShift(ubv::one(targetSignificandWidth + 2))) & ~subnormalMask); // The only case when this looses info is earlyUnderflow
   INVARIANT(IMPLIES(subnormalIncrementAmount.isAllZeros(), earlyUnderflow || normalRounding));
   
 
@@ -439,7 +442,8 @@ template <class t>
 
   // Convert the round up flag to a mask
   ubv normalRoundUpAmount(ubv(roundUp).matchWidth(extractedSignificand));
-  ubv subnormalRoundUpMask(ubv(roundUp).append(ubv::zero(targetSignificandWidth)).signExtendRightShift(ubv(targetSignificandWidth + 1, targetSignificandWidth)));
+  // TODO: unhack below line
+  ubv subnormalRoundUpMask(ubv(roundUp).append(ubv::zero(targetSignificandWidth + 1)).signExtendRightShift(ubv(targetSignificandWidth + 2, targetSignificandWidth)));
   ubv subnormalRoundUpAmount(subnormalRoundUpMask & subnormalIncrementAmount);
   
   ubv rawRoundedSignificand((ITE(normalRounding,

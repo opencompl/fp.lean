@@ -7,5 +7,5 @@ ALL=simpleExecutable.o
 all : $(ALL)
 
 %.o : %.cpp
-	$(CXX) $(CXXFLAGS) -c $^ -o $@
+	$(CXX) $(CXXFLAGS) -g -c $^ -o $@
 
