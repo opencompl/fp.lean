@@ -37,7 +37,7 @@ instance : Repr OpResult where
     f!"{res.oper},{repr res.mode},{joinedResults}"
 
 def allRoundingModes : List RoundingMode :=
-  [.RNE, .RNA, .RTP, .RTN, .RTZ]
+  [.RNA, .RNE, .RTN, .RTP, .RTZ]
 
 def test_add (f : FP8Format) (m : RoundingMode) (a b : BitVec 8) : OpResult :=
   let a' := PackedFloat.ofBits f.e f.m (f.h.mpr a)

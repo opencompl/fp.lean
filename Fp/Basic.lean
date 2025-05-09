@@ -82,7 +82,7 @@ def getNaN (exWidth sigWidth : Nat) : PackedFloat exWidth sigWidth where
 @[simp]
 def getInfinity (exWidth sigWidth : Nat) (sign : Bool)
   : PackedFloat exWidth sigWidth where
-  sign := sign
+  sign
   ex := BitVec.allOnes exWidth
   sig := 0
 
@@ -92,6 +92,13 @@ def getZero (exWidth sigWidth : Nat)
   sign := False
   ex := 0
   sig := 0
+
+@[simp]
+def getMax (exWidth sigWidth : Nat) (sign : Bool)
+  : PackedFloat exWidth sigWidth where
+  sign
+  ex := BitVec.allOnes exWidth - 1
+  sig := BitVec.allOnes sigWidth
 
 theorem injEq (a b : PackedFloat e s)
   : (a.sign = b.sign ∧ a.ex = b.ex ∧ a.sig = b.sig) = (a = b) := by
