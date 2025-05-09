@@ -16,6 +16,17 @@ structure OpResult where
   mode : RoundingMode
   result : List String
 
+structure FP8Format where
+  e : Nat
+  m : Nat
+  h8 : 1 + e + m = 8
+  he : 0 < e
+
+namespace FP8Format
+theorem h (f : FP8Format)
+  : BitVec (1 + f.e + f.m) = BitVec 8 := by simp only [f.h8]
+end FP8Format
+
 def toDigits (b : BitVec n) : String :=
   let b' := b.reverse
   String.join ((List.finRange n).map (fun i => b'[i].toNat.digitChar.toString))
@@ -28,36 +39,36 @@ instance : Repr OpResult where
 def allRoundingModes : List RoundingMode :=
   [.RNE, .RNA, .RTP, .RTN, .RTZ]
 
-def test_add (m : RoundingMode) (a b : BitVec 8) : OpResult :=
-  let a' := PackedFloat.ofBits 5 2 a
-  let b' := PackedFloat.ofBits 5 2 b
+def test_add (f : FP8Format) (m : RoundingMode) (a b : BitVec 8) : OpResult :=
+  let a' := PackedFloat.ofBits f.e f.m (f.h.mpr a)
+  let b' := PackedFloat.ofBits f.e f.m (f.h.mpr b)
   {
     oper := "add"
     mode := m
-    result := [a, b, PackedFloat.toBits (add (by omega) a' b' m)].map toDigits
+    result := [a, b, f.h.mp (PackedFloat.toBits (add f.he a' b' m))].map toDigits
   }
 
-def test_div (m : RoundingMode) (a b : BitVec 8) : OpResult :=
-  let a' := PackedFloat.ofBits 5 2 a
-  let b' := PackedFloat.ofBits 5 2 b
+def test_div (f : FP8Format) (m : RoundingMode) (a b : BitVec 8) : OpResult :=
+  let a' := PackedFloat.ofBits f.e f.m (f.h.mpr a)
+  let b' := PackedFloat.ofBits f.e f.m (f.h.mpr b)
   {
     oper := "div"
     mode := m
-    result := [a, b, PackedFloat.toBits (div a' b' m)].map toDigits
+    result := [a, b, f.h.mp (PackedFloat.toBits (div a' b' m))].map toDigits
   }
 
-def test_mul (m : RoundingMode) (a b : BitVec 8) : OpResult :=
-  let a' := PackedFloat.ofBits 5 2 a
-  let b' := PackedFloat.ofBits 5 2 b
+def test_mul (f : FP8Format) (m : RoundingMode) (a b : BitVec 8) : OpResult :=
+  let a' := PackedFloat.ofBits f.e f.m (f.h.mpr a)
+  let b' := PackedFloat.ofBits f.e f.m (f.h.mpr b)
   {
     oper := "mul"
     mode := m
-    result := [a, b, PackedFloat.toBits (mul (by omega) a' b' m)].map toDigits
+    result := [a, b, f.h.mp (PackedFloat.toBits (mul f.he a' b' m))].map toDigits
   }
 
-def test_lt (m : RoundingMode) (a b : BitVec 8) : OpResult :=
-  let a' := PackedFloat.ofBits 5 2 a
-  let b' := PackedFloat.ofBits 5 2 b
+def test_lt (f : FP8Format) (m : RoundingMode) (a b : BitVec 8) : OpResult :=
+  let a' := PackedFloat.ofBits f.e f.m (f.h.mpr a)
+  let b' := PackedFloat.ofBits f.e f.m (f.h.mpr b)
   {
     oper := "lt"
     mode := m
@@ -73,17 +84,36 @@ def test_binop (f : RoundingMode → BitVec 8 → BitVec 8 → OpResult) : List 
     )
   )
 
-def test_all : Unit → List OpResult := fun () =>
+def test_all (f : FP8Format) : List OpResult :=
   List.flatten [
-    test_binop test_add,
-    test_binop test_lt,
-    test_binop test_mul,
-    test_binop test_div
+    test_binop $ test_add f,
+    test_binop $ test_lt f,
+    test_binop $ test_mul f,
+    test_binop $ test_div f
   ]
 
-def main : IO Unit := do
-  for res in test_all () do
-    IO.println (repr res)
+def e5m2 : FP8Format where
+  e := 5
+  m := 2
+  h8 := by omega
+  he := by omega
+
+def e3m4 : FP8Format where
+  e := 3
+  m := 4
+  h8 := by omega
+  he := by omega
+
+def main (args : List String) : IO Unit := do
+  if args = ["e5m2"] then
+    for res in test_all e5m2 do
+      IO.println (repr res)
+  else if args = ["e3m4"] then
+    for res in test_all e3m4 do
+      IO.println (repr res)
+  else
+      IO.println "Please run with command line arg e5m2 or e3m4"
+
 
 /-- info: { sign := -, ex := 0x04#5, sig := 0x1#2 } -/
 #guard_msgs in #eval add (by omega) (PackedFloat.ofBits 5 2 0b00000011#8) (PackedFloat.ofBits 5 2 0b10010001#8) .RNE
