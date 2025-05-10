@@ -84,7 +84,12 @@ def round
     let trimmed := a ++ b
     if over != 0 then
       -- Overflow to Infinity
-      PackedFloat.getInfinity _ _ x.num.sign
+      -- Unless we're rounding RTN/RTP to the opposite sign, or RTZ
+      -- in which case we overflow to MAX
+      if (mode == .RTN ∧ ¬x.num.sign) ∨ (mode == .RTP ∧ x.num.sign) ∨ mode == .RTZ then
+        PackedFloat.getMax _ _ x.num.sign
+      else
+        PackedFloat.getInfinity _ _ x.num.sign
     else
     let index := fls trimmed
     let sigWidthB := BitVec.ofNat _ sigWidth

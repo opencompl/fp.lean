@@ -1,7 +1,7 @@
 import Fp.Basic
 import Fp.Rounding
 
-def f_add (a b : FixedPoint w e) : FixedPoint (w+1) e :=
+def f_add (mode : RoundingMode) (a b : FixedPoint w e) : FixedPoint (w+1) e :=
   let hExOffset : e < w+1 := by
     exact Nat.lt_add_right 1 a.hExOffset
   let ax := BitVec.setWidth' (by omega) a.val
@@ -27,14 +27,14 @@ def f_add (a b : FixedPoint w e) : FixedPoint (w+1) e :=
     }
   else
     -- Signs are different but values are same, so return +0.0
-    -- TODO: actually when rounding mode is RTN we should return -0.0
+    -- When rounding mode is RTN we should instead return -0.0
     {
-      sign := False
+      sign := mode == .RTN
       val := BitVec.zero _
       hExOffset := hExOffset
     }
 
-def e_add (a b : EFixedPoint w e) : EFixedPoint (w+1) e :=
+def e_add (mode : RoundingMode) (a b : EFixedPoint w e) : EFixedPoint (w+1) e :=
   open EFixedPoint in
   let hExOffset : e < w + 1 := by
     exact Nat.lt_add_right 1 a.num.hExOffset
@@ -52,11 +52,11 @@ def e_add (a b : EFixedPoint w e) : EFixedPoint (w+1) e :=
     cases ha : a.state <;> cases hb : b.state <;> simp_all
   {
     state := .Number
-    num := f_add a.num b.num
+    num := f_add mode a.num b.num
   }
 
 def add (he : 0 < e) (a b : PackedFloat e s) (mode : RoundingMode) : PackedFloat e s :=
-  round _ _ mode (e_add (a.toEFixed he) (b.toEFixed he))
+  round _ _ mode (e_add mode (a.toEFixed he) (b.toEFixed he))
 
 -- Proof by brute force (it takes a while)
 /-
@@ -67,14 +67,14 @@ theorem PackedFloat_add_comm' (m : RoundingMode) (a b : PackedFloat 5 2)
   bv_decide
 -/
 
-theorem f_add_comm (a b : FixedPoint 34 16)
-  : (f_add a b) = (f_add b a) := by
+theorem f_add_comm (m : RoundingMode) (a b : FixedPoint 34 16)
+  : (f_add m a b) = (f_add m b a) := by
   apply FixedPoint.inj
   simp [f_add]
   bv_decide +acNf
 
-theorem e_add_comm (a b : EFixedPoint 34 16)
-  : (e_add a b) = (e_add b a) := by
+theorem e_add_comm (m : RoundingMode) (a b : EFixedPoint 34 16)
+  : (e_add m a b) = (e_add m b a) := by
   simp [e_add]
   cases ha2 : a.state <;> cases hb2 : b.state <;>
     simp <;> simp_all only [eq_comm, f_add_comm]
