@@ -35,7 +35,7 @@ jobs:
           path: .lake
           key: ${{ runner.os }}-lake-${{ hashFiles('lake-manifest.json') }}-4
 
-      # - name: Get mathlib cache (only if no cache available) 
+      # - name: Get mathlib cache (only if no cache available)
       #   if: steps.cache-lake.outputs.cache-hit != 'true'
       #   run: |
       #     lake -R exe cache get # download cache of mathlib docs.
@@ -47,3 +47,16 @@ jobs:
       - name: Run Executable
         run: |
           ./.lake/build/bin/fp-lean
+      - name: Build docs
+        run: |
+          cd docbuild
+          lake build Fp:docs
+
+      - name: Upload artifact 📁
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: 'docbuild/.lake/build/doc'
+
+      - name: Deploy to GitHub Pages 🚀
+        id: deployment
+        uses: actions/deploy-pages@v1
