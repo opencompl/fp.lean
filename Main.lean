@@ -1,9 +1,4 @@
-import Fp.Basic
-import Fp.Rounding
-import Fp.Addition
-import Fp.Multiplication
-import Fp.Comparison
-import Fp.Division
+import Fp
 
 -- Idk how to prove in general
 theorem ofBits_inv_toBits (x : PackedFloat 5 2)
