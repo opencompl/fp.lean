@@ -38,18 +38,10 @@ jobs:
           path: .lake
           key: ${{ runner.os }}-lake-${{ hashFiles('lake-manifest.json') }}-4
 
-      # - name: Get mathlib cache (only if no cache available)
-      #   if: steps.cache-lake.outputs.cache-hit != 'true'
-      #   run: |
-      #     lake -R exe cache get # download cache of mathlib docs.
-
       - name: Compile Library 🧐
         run: |
           lake -R build
 
-      - name: Run Executable
-        run: |
-          ./.lake/build/bin/fp-lean
       - name: Build docs
         run: |
           cd docbuild
