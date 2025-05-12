@@ -1,9 +1,20 @@
 ## `fp.lean` [![core library](https://github.com/opencompl/fp.lean/actions/workflows/ci.yml/badge.svg)](https://github.com/opencompl/fp.lean/actions/workflows/ci.yml)
 
-- [symfpu](https://github.com/martin-cs/symfpu) for circuits.
-- GCC torture test to verify specification.
+- [Link to auto-generated documentation](https://opencompl.github.io/fp.lean/Fp/Multiplication.html)
 
-#### Floating Point Torture Test
+#### References
+
+
+- We use circuits inspired from [symfpu](https://github.com/martin-cs/symfpu) for bitblasting.
+
+#### Trustworthiness: Exhaustive Enumeration [![Golden testing](https://github.com/opencompl/fp.lean/actions/workflows/golden.yml/badge.svg)](https://github.com/opencompl/fp.lean/actions/workflows/golden.yml)
+
+Our CI [exhaustively enumerates](https://github.com/opencompl/fp.lean/actions/runs/14981167344/job/42085394430) against the [FloatX](https://github.com/oprecomp/FloatX) and [symfpu](https://github.com/martin-cs/symfpu) libraries
+for bit-for-bit compatibility.
+
+We would appreciate pull requests that improve our testing.
+We audited several librares, but settled on our choices since they enable us to
+test all rounding modes for small bitwidths.
 
 - [SMT-LIB floating point specification](https://smt-lib.org/theories-FloatingPoint.shtml).
 - [Berlekee TestFloat](https://www.jhauser.us/arithmetic/TestFloat.html).
@@ -12,7 +23,7 @@ _ [Kahan Floating Point Paranoia](https://people.math.sc.edu/Burkardt/c_src/para
 - [IEEE floating point testing software](https://www.math.utah.edu/~beebe/software/ieee/).
 
 
-#### Floating Point Docs
+#### References
 
 - [2020-2021 Floating Point Course @ Cambridge](https://www.cl.cam.ac.uk/teaching/1011/FPComp/)
 - [Numerical Computing with IEEE Floating Point Arithmetic by Michael L. Overton.](https://dl.acm.org/doi/pdf/10.1145/103162.103163)
