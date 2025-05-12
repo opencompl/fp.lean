@@ -1,4 +1,4 @@
-name: Golden testing against FloatX
+name: Golden testing
 on:
   push:
     branches:
@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   build:
-    name: Golden testing against FloatX
+    name: Golden testing against FloatX + SymFPU
     permissions:
       pull-requests: write
     # Exclude expensive self-hosted runner. Reserved for performance benchmarking.
