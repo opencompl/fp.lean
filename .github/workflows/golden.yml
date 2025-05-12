@@ -1,0 +1,71 @@
+name: Golden testing
+on:
+  push:
+    branches:
+      - "main"
+  pull_request:
+  merge_group:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Golden testing against FloatX + SymFPU
+    permissions:
+      pull-requests: write
+    # Exclude expensive self-hosted runner. Reserved for performance benchmarking.
+    # https://docs.github.com/en/enterprise-cloud@latest/actions/writing-workflows/choosing-where-your-workflow-runs/choosing-the-runner-for-a-job#choosing-github-hosted-runners
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v3
+
+      - name: Install elan 🕑
+        run: |
+          set -o pipefail
+          curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh -s -- --default-toolchain none -y
+          ~/.elan/bin/lean --version
+          echo "$HOME/.elan/bin" >> $GITHUB_PATH
+
+      - name: Cache `.lake` folder
+        id: cache-lake
+        uses: actions/cache@v4
+        with:
+          path: .lake
+          key: ${{ runner.os }}-lake-${{ hashFiles('lake-manifest.json') }}-4
+
+      - name: Install C++ build tools (if needed)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake # Add other C++ deps if needed
+
+      # - name: Get mathlib cache (only if no cache available)
+      #   if: steps.cache-lake.outputs.cache-hit != 'true'
+      #   run: |
+      #     lake -R exe cache get # download cache of mathlib docs.
+      #
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10' # Specify your desired Python version
+
+      - name: Cache Python dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run golden test for FloatX
+        run: |
+          ./test/ci/compare-floatx-fplean.sh
+
+      - name: Run golden test for SymFPU
+        run: |
+          ./test/ci/compare-symfpu-fplean.sh
+

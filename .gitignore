@@ -1,3 +1,5 @@
+*.csv
+.venv/
 /.lake
 
 *.out
