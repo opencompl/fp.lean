@@ -61,8 +61,11 @@ jobs:
       - name: Install Python dependencies
         run: pip install -r requirements.txt
 
-
-      - name: Run golden tests
+      - name: Run golden test for FloatX
         run: |
           ./test/ci/compare-floatx-fplean.sh
+
+      - name: Run golden test for SymFPU
+        run: |
+          ./test/ci/compare-symfpu-fplean.sh
 
