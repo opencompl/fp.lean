@@ -53,7 +53,7 @@ jobs:
           lake build Fp:docs
 
       - name: Upload artifact 📁
-        uses: actions/upload-pages-artifact@v1
+        uses: actions/upload-pages-artifact@v4
         with:
           path: 'docbuild/.lake/build/doc'
 
