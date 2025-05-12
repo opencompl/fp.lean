@@ -69,9 +69,9 @@ def shouldRoundAway (m : RoundingMode)
 def round
   (exWidth sigWidth : Nat) (mode : RoundingMode) (x : EFixedPoint width exOffset)
   : PackedFloat exWidth sigWidth :=
-  if x.state == .NaN then
+  if x.state = .NaN then
     PackedFloat.getNaN _ _
-  else if x.state == .Infinity then
+  else if x.state = .Infinity then
     PackedFloat.getInfinity _ _ x.num.sign
   else
     let exOffset' := 2^(exWidth - 1) + sigWidth - 2
@@ -86,7 +86,7 @@ def round
       -- Overflow to Infinity
       -- Unless we're rounding RTN/RTP to the opposite sign, or RTZ
       -- in which case we overflow to MAX
-      if (mode == .RTN ∧ ¬x.num.sign) ∨ (mode == .RTP ∧ x.num.sign) ∨ mode == .RTZ then
+      if (mode = .RTN ∧ ¬x.num.sign) ∨ (mode = .RTP ∧ x.num.sign) ∨ mode = .RTZ then
         PackedFloat.getMax _ _ x.num.sign
       else
         PackedFloat.getInfinity _ _ x.num.sign

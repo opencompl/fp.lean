@@ -63,7 +63,7 @@ def test_mul (f : FP8Format) (m : RoundingMode) (a b : BitVec 8) : OpResult :=
   {
     oper := "mul"
     mode := m
-    result := [a, b, f.h.mp (PackedFloat.toBits (mul f.he a' b' m))].map toDigits
+    result := [a, b, f.h.mp (PackedFloat.toBits (mul a' b' m))].map toDigits
   }
 
 def test_lt (f : FP8Format) (m : RoundingMode) (a b : BitVec 8) : OpResult :=
@@ -104,7 +104,7 @@ def e3m4 : FP8Format where
   h8 := by omega
   he := by omega
 
-def main (args : List String) : IO Unit := do
+def main (args : List String) : IO Unit :=
   if args = ["e5m2"] then
     for res in test_all e5m2 do
       IO.println (repr res)
@@ -120,8 +120,8 @@ def main (args : List String) : IO Unit := do
 /-- info: { sign := +, ex := 0x01#5, sig := 0x2#2 } -/
 #guard_msgs in #eval round 5 2 .RNE (PackedFloat.toEFixed {sign := false, ex := 1#5, sig := 2#2} (by omega))
 /-- info: { sign := +, ex := 0x1f#5, sig := 0x2#2 } -/
-#guard_msgs in #eval mul (by omega) (PackedFloat.getZero 5 2) (PackedFloat.getInfinity 5 2 true) .RTZ
+#guard_msgs in #eval mul (PackedFloat.getZero 5 2) (PackedFloat.getInfinity 5 2 true) .RTZ
 /-- info: { sign := +, ex := 0x1f#5, sig := 0x0#2 } -/
 #guard_msgs in #eval div (Tests.oneE5M2) (PackedFloat.getZero 5 2) .RTZ
 /-- info: { sign := +, ex := 0x00#5, sig := 0x1#2 } -/
-#guard_msgs in #eval mul (by omega) (PackedFloat.ofBits 5 2 0b00000001#8) (PackedFloat.ofBits 5 2 0b00111001#8) .RNE
+#guard_msgs in #eval mul (PackedFloat.ofBits 5 2 0b00000001#8) (PackedFloat.ofBits 5 2 0b00111001#8) .RNE

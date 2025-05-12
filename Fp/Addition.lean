@@ -29,7 +29,7 @@ def f_add (mode : RoundingMode) (a b : FixedPoint w e) : FixedPoint (w+1) e :=
     -- Signs are different but values are same, so return +0.0
     -- When rounding mode is RTN we should instead return -0.0
     {
-      sign := mode == .RTN
+      sign := mode = .RTN
       val := BitVec.zero _
       hExOffset := hExOffset
     }
@@ -82,6 +82,14 @@ theorem e_add_comm (m : RoundingMode) (a b : EFixedPoint 34 16)
 theorem add_comm (m : RoundingMode) (a b : PackedFloat 5 2)
   : (add (by omega) a b m) = (add (by omega) b a m) := by
   simp [add, e_add_comm]
+
+theorem add_zero_is_id (a : PackedFloat 5 2) (m : RoundingMode) (ha : ¬a.isNaN)
+  : (add (by omega) a (PackedFloat.getZero _ _) m) = a := by
+  apply PackedFloat.inj
+  simp at ha
+  simp [add, e_add, f_add, round, PackedFloat.toEFixed,
+      -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
+  sorry
 
 /-- info: { sign := +, ex := 0x04#5, sig := 0x0#2 } -/
 #guard_msgs in #eval add (by omega) (PackedFloat.ofBits 5 2 0b10000100#8) (PackedFloat.ofBits 5 2 0b00010001#8) .RNE

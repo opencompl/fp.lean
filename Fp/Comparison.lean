@@ -10,9 +10,9 @@ def f_lt (a b : FixedPoint w e) : Bool :=
 @[simp]
 def e_lt (a b : EFixedPoint w e) : Bool :=
   a.state != .NaN && b.state != .NaN && (
-    (a.state == .Infinity && a.num.sign && (b.state == .Number || ¬b.num.sign)) ||
-    (b.state == .Infinity && ¬b.num.sign && (a.state == .Number || a.num.sign)) ||
-    (a.state == .Number && b.state == .Number && f_lt a.num b.num)
+    (a.state = .Infinity && a.num.sign && (b.state = .Number || ¬b.num.sign)) ||
+    (b.state = .Infinity && ¬b.num.sign && (a.state = .Number || a.num.sign)) ||
+    (a.state = .Number && b.state = .Number && f_lt a.num b.num)
   )
 
 @[simp]
