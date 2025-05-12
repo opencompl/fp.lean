@@ -1,8 +1,9 @@
-name: core library
+name: Core Library
+
 on:
   push:
     branches:
-      - "main"
+      - main
   pull_request:
   merge_group:
 
@@ -14,43 +15,26 @@ permissions:
 jobs:
   build:
     name: core library
+    runs-on: ubuntu-latest
     permissions:
       pull-requests: write
-    # Exclude expensive self-hosted runner. Reserved for performance benchmarking.
-    # https://docs.github.com/en/enterprise-cloud@latest/actions/writing-workflows/choosing-where-your-workflow-runs/choosing-the-runner-for-a-job#choosing-github-hosted-runners
-    runs-on: ubuntu-latest
     steps:
-      - name: Checkout 🛎️
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
+        name: Checkout 🛎️
 
       - name: Install elan 🕑
         run: |
           set -o pipefail
-          curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh -s -- --default-toolchain none -y
+          curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf \
+            | sh -s -- --default-toolchain none -y
           ~/.elan/bin/lean --version
           echo "$HOME/.elan/bin" >> $GITHUB_PATH
 
-      - name: Cache `.lake` folder
-        id: cache-lake
+      - id: cache-lake
         uses: actions/cache@v4
         with:
           path: .lake
           key: ${{ runner.os }}-lake-${{ hashFiles('lake-manifest.json') }}-4
 
       - name: Compile Library 🧐
-        run: |
-          lake -R build
-
-      - name: Build docs
-        run: |
-          cd docbuild
-          lake build Fp:docs
-
-      - name: Upload artifact 📁
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: 'docbuild/.lake/build/doc'
-
-      - name: Deploy to GitHub Pages 🚀
-        id: deployment
-        uses: actions/deploy-pages@v4
+        run: lake -R build
