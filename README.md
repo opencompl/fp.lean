@@ -1,5 +1,17 @@
 ## `fp.lean` [![core library](https://github.com/opencompl/fp.lean/actions/workflows/ci.yml/badge.svg)](https://github.com/opencompl/fp.lean/actions/workflows/ci.yml)
 
+A library for bitblasting IEEE754 floating point multiplication.
+
+```lean
+-- https://github.com/opencompl/fp.lean/blob/5e51278246ed86f5e772ee6697400c163b56d5e3/Fp/Multiplication.lean#L82
+theorem mul_one_is_id (a : PackedFloat 5 2) (m : RoundingMode) (ha : ¬a.isNaN)
+  : (mul a Tests.oneE5M2 m) = a := by
+  apply PackedFloat.inj
+  simp at ha
+  simp [mul, round, BitVec.cons, Tests.oneE5M2, -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
+  bv_decide
+```
+
 - [Link to auto-generated documentation](https://opencompl.github.io/fp.lean/Fp/Multiplication.html)
 
 #### References
