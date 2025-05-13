@@ -23,6 +23,20 @@ def fls' (m : Nat) (b : BitVec n) (hm : n ≤ m) : BitVec m :=
   else fls' m (BitVec.truncate (n-1) b) (by omega)
   termination_by n
 
+@[simp]
+def fls_log (m : Nat) (b : BitVec n) : BitVec n :=
+  if m = 0 then
+    0
+  else if b >>> m == 0 then
+    fls_log (m/2) b
+  else
+    BitVec.ofNat _ m ||| fls_log (m/2) (b >>> m)
+  termination_by m
+
+@[simp]
+def flsIter (b : BitVec n) : BitVec n :=
+  fls' n b (n.le_refl)
+
 /--
 Find the position of the last (most significant) set bit in a BitVec.
 
@@ -30,7 +44,12 @@ Returns zero if BitVec is zero. Otherwise, returns the index starting from 1.
 -/
 @[simp]
 def fls (b : BitVec n) : BitVec n :=
-  fls' n b (n.le_refl)
+  if b == 0 then 0 else 1#_ + fls_log (lastPowerOfTwo n) b
+
+theorem flsIter_eq_fls (b : BitVec 8)
+  : flsIter b = fls b := by
+  simp
+  bv_decide
 
 /--
 Gets the first w bits of the bitvector v.
@@ -135,27 +154,6 @@ theorem round_leftinv_toEFixed (x : PackedFloat 5 2) (mode : RoundingMode) (hx :
   simp [round, PackedFloat.toEFixed, -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
   bv_decide
 
--- Test threorems to see if bv_decide works
-theorem fls_b (b : BitVec 7) :
-  fls (fls b) <= 5 := by
-  simp
-  bv_decide
-
-theorem round_b (b : FixedPoint 3 1) (mode : RoundingMode) :
-  (round 5 1 mode { state := .Number, num := b }).ex ≠ BitVec.allOnes _ := by
-  simp [round]
-  bv_decide
-
-theorem toEFixed_test (f : PackedFloat 5 2)
-  : (f.toEFixed (by omega)).num.val ≠ 60 := by
-  simp [PackedFloat.toEFixed, -BitVec.shiftLeft_eq']
-  bv_decide
-
-theorem getSignificand_append_truncate_test (v : BitVec 5)
-  : (BitVec.truncate 3 v.reverse).reverse = truncateRight 3 v := by
-  simp [BitVec.reverse, BitVec.concat]
-  bv_decide
-
 def isExactFloat (exWidth sigWidth : Nat)
   (x : EFixedPoint width exOffset) : Bool :=
   if x.state = .Number then
@@ -185,28 +183,6 @@ def isExactFloat (exWidth sigWidth : Nat)
       (trimmed &&& ((1#_ <<< totalShift) - 1#_)) == 0
   else
     true
-
-/--
-Every floating point number converted to fixed point form, shall be an exact
-floating point number.
--/
-theorem toEFixed_isExactFloat (a : PackedFloat 5 2)
-  : isExactFloat 5 2 (a.toEFixed (by omega)) := by
-  simp [isExactFloat, PackedFloat.toEFixed,
-    -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
-  bv_decide
-
-/--
-If a fixed point number is an exact floating point number, then converting to
-floating point and back should not change the denotation.
--/
-theorem isExactFloat_round_toEFixed (a : EFixedPoint 34 16) (m : RoundingMode)
-  (ha : isExactFloat 5 2 a)
-  : a.equal_denotation ((round 5 2 m a).toEFixed (by omega)) := by
-  simp [isExactFloat, -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq'] at ha
-  simp [PackedFloat.toEFixed, round,
-    -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
-  bv_decide
 
 /-- info: 0x05#8 -/
 #guard_msgs in #eval fls 0x10#8

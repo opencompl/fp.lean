@@ -20,6 +20,28 @@ def doubleRNE (a : PackedFloat e s) : PackedFloat e s :=
 
 -- Theorems
 
+/--
+Every floating point number converted to fixed point form, shall be an exact
+floating point number.
+-/
+theorem toEFixed_isExactFloat (a : PackedFloat 5 2)
+  : isExactFloat 5 2 (a.toEFixed (by omega)) := by
+  simp [isExactFloat, PackedFloat.toEFixed,
+    -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
+  bv_decide
+
+/--
+If a fixed point number is an exact floating point number, then converting to
+floating point and back should not change the denotation.
+-/
+theorem isExactFloat_round_toEFixed (a : EFixedPoint 34 16) (m : RoundingMode)
+  (ha : isExactFloat 5 2 a)
+  : a.equal_denotation ((round 5 2 m a).toEFixed (by omega)) := by
+  simp [isExactFloat, -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq'] at ha
+  simp [PackedFloat.toEFixed, round,
+    -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
+  bv_decide
+
 theorem add_eq_mul_two (a : PackedFloat 5 2) (m : RoundingMode)
   : add (by omega) a a m = mul twoE5M2 a m := by
   apply PackedFloat.inj
