@@ -62,18 +62,3 @@ theorem e_le_of_le (a b : PackedFloat 5 2)
   : le a b → e_le (a.toEFixed (by omega)) (b.toEFixed (by omega)) := by
   simp [PackedFloat.toEFixed]
   bv_decide
-
-theorem e_add_monotone (m : RoundingMode) (a b c : EFixedPoint 34 16)
-  (hc : c.state = .Number)
-  : e_le a b → e_le (e_add m a c) (e_add m b c) := by
-  simp_all [e_add, f_add]
-  bv_decide
-
-theorem add_monotone (a b c : PackedFloat 5 2) (m : RoundingMode) (hc : c.isNormOrSubnorm)
-  : le a b → le (add (by omega) a c m) (add (by omega) b c m) := by
-  intro h
-  apply le_of_e_le
-  have hc' : (c.toEFixed (by omega)).state = .Number :=
-    PackedFloat.isNumber_of_isNormOrSubnorm c hc
-  apply e_add_monotone _ _ _ _ hc'
-  exact e_le_of_le _ _ h

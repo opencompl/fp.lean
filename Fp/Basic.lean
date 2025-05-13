@@ -312,19 +312,18 @@ def isZero (a : EFixedPoint w e) : Bool :=
 
 end EFixedPoint
 
-namespace Tests
-
 -- Temp playground
 
 def oneE5M2 : PackedFloat 5 2 := PackedFloat.ofBits 5 2 0b00111100#8
 
-/-- info: { sign := +, ex := 0x0f#5, sig := 0x0#2 } -/
-#guard_msgs in #eval (repr oneE5M2)
+def twoE5M2 : PackedFloat 5 2 := PackedFloat.ofBits _ _ 0b01000000
 
 def minNormE5M2 := PackedFloat.ofBits 5 2 0b00000100#8
 
 def minDenormE5M2 := PackedFloat.ofBits 5 2 0b00000001#8
 
+/-- info: { sign := +, ex := 0x0f#5, sig := 0x0#2 } -/
+#guard_msgs in #eval (repr oneE5M2)
 /-- info: { sign := +, ex := 0x1f#5, sig := 0x2#2 } -/
 #guard_msgs in #eval (PackedFloat.getNaN 5 2)
 /-- info: { state := num, num := + 0x000010000#34 } -/
@@ -333,19 +332,10 @@ def minDenormE5M2 := PackedFloat.ofBits 5 2 0b00000001#8
 #guard_msgs in #eval minDenormE5M2.toEFixed (by omega)
 /-- info: { state := num, num := + 0x000000004#34 } -/
 #guard_msgs in #eval minNormE5M2.toEFixed (by omega)
-
-
--- Sanity checks
-theorem fixed_of_minDenormE5M2_is_0b1
-  : PackedFloat.getValOrNone minDenormE5M2 (by omega) = some 1 := by
-  simp [minDenormE5M2, PackedFloat.getValOrNone,
-        PackedFloat.toEFixed]
-
-theorem fixed_of_minNormE5M2_is_0b100
-  : PackedFloat.getValOrNone minNormE5M2 (by omega) = some 4 := by
-  rfl
-
-end Tests
+/-- info: some 1 -/
+#guard_msgs in #eval PackedFloat.getValOrNone minDenormE5M2 (by omega)
+/-- info: some 4 -/
+#guard_msgs in #eval PackedFloat.getValOrNone minNormE5M2 (by omega)
 
 /-
 - (@bollu's thought): We may like to have `FixedPoint.toRat : FixedPoint → ℚ`, which

@@ -80,8 +80,8 @@ theorem mul_comm (a b : PackedFloat 5 2) (m : RoundingMode)
   bv_decide
 
 theorem mul_one_is_id (a : PackedFloat 5 2) (m : RoundingMode) (ha : ¬a.isNaN)
-  : (mul a Tests.oneE5M2 m) = a := by
+  : (mul a oneE5M2 m) = a := by
   apply PackedFloat.inj
   simp at ha
-  simp [mul, round, BitVec.cons, Tests.oneE5M2, -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
+  simp [mul, round, BitVec.cons, oneE5M2, -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
   bv_decide

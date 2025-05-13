@@ -32,8 +32,6 @@ Returns zero if BitVec is zero. Otherwise, returns the index starting from 1.
 def fls (b : BitVec n) : BitVec n :=
   fls' n b (n.le_refl)
 
-#eval fls 0x10#8
-
 /--
 Gets the first w bits of the bitvector v.
 -/
@@ -60,9 +58,6 @@ def shouldRoundAway (m : RoundingMode)
   | .RTP => (guard ∨ sticky) ∧ ¬sign
   | .RTN => (guard ∨ sticky) ∧ sign
   | .RTZ => False
-
-#eval truncateRight 4 0xaf#8
-#eval truncateRight 16 0xaf#8
 
 -- TODO: Implement different rounding modes
 -- Less well-behaved when exWidth = 0. This shouldn't be an issue?
@@ -160,3 +155,64 @@ theorem getSignificand_append_truncate_test (v : BitVec 5)
   : (BitVec.truncate 3 v.reverse).reverse = truncateRight 3 v := by
   simp [BitVec.reverse, BitVec.concat]
   bv_decide
+
+def isExactFloat (exWidth sigWidth : Nat)
+  (x : EFixedPoint width exOffset) : Bool :=
+  if x.state = .Number then
+    let exOffset' := 2^(exWidth - 1) + sigWidth - 2
+    -- trim bitvector
+    let over := x.num.val >>> (exOffset + 2^(exWidth-1))
+    let a := (x.num.val >>> exOffset).truncate (2^(exWidth-1))
+    let b := truncateRight exOffset' (x.num.val.truncate exOffset)
+    let underWidth := exOffset - exOffset'
+    let under := x.num.val.truncate underWidth
+    let trimmed := a ++ b
+    if over != 0 || under != 0 then
+      -- Overflow to Infinity, or under has values
+      false
+    else
+    let index := fls trimmed
+    let sigWidthB := BitVec.ofNat _ sigWidth
+    let ex : BitVec exWidth :=
+      if index ≤ sigWidthB then
+        0
+      else
+        (index - sigWidthB).truncate _
+    if ex = 0 then
+      true
+    else
+      let totalShift : BitVec (exWidth+1) := ex.truncate _ - 1
+      (trimmed &&& ((1#_ <<< totalShift) - 1#_)) == 0
+  else
+    true
+
+/--
+Every floating point number converted to fixed point form, shall be an exact
+floating point number.
+-/
+theorem toEFixed_isExactFloat (a : PackedFloat 5 2)
+  : isExactFloat 5 2 (a.toEFixed (by omega)) := by
+  simp [isExactFloat, PackedFloat.toEFixed,
+    -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
+  bv_decide
+
+/--
+If a fixed point number is an exact floating point number, then converting to
+floating point and back should not change the denotation.
+-/
+theorem isExactFloat_round_toEFixed (a : EFixedPoint 34 16) (m : RoundingMode)
+  (ha : isExactFloat 5 2 a)
+  : a.equal_denotation ((round 5 2 m a).toEFixed (by omega)) := by
+  simp [isExactFloat, -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq'] at ha
+  simp [PackedFloat.toEFixed, round,
+    -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
+  bv_decide
+
+/-- info: 0x05#8 -/
+#guard_msgs in #eval fls 0x10#8
+/-- info: 0x00#8 -/
+#guard_msgs in #eval fls 0#8
+/-- info: 0xa#4 -/
+#guard_msgs in #eval truncateRight 4 0xaf#8
+/-- info: 0xaf00#16 -/
+#guard_msgs in #eval truncateRight 16 0xaf#8

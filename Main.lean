@@ -117,6 +117,6 @@ def main (args : List String) : IO Unit :=
 /-- info: { sign := +, ex := 0x1f#5, sig := 0x2#2 } -/
 #guard_msgs in #eval mul (PackedFloat.getZero 5 2) (PackedFloat.getInfinity 5 2 true) .RTZ
 /-- info: { sign := +, ex := 0x1f#5, sig := 0x0#2 } -/
-#guard_msgs in #eval div (Tests.oneE5M2) (PackedFloat.getZero 5 2) .RTZ
+#guard_msgs in #eval div oneE5M2 (PackedFloat.getZero 5 2) .RTZ
 /-- info: { sign := +, ex := 0x00#5, sig := 0x1#2 } -/
 #guard_msgs in #eval mul (PackedFloat.ofBits 5 2 0b00000001#8) (PackedFloat.ofBits 5 2 0b00111001#8) .RNE

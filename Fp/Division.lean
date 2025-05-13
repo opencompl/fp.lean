@@ -56,14 +56,9 @@ def div (a b : PackedFloat e s) (mode : RoundingMode) : PackedFloat e s :=
 -- This theorem is hella broken right now.
 set_option maxHeartbeats 200000
 def div_one_is_id (a : PackedFloat 5 2)
-  : div a Tests.oneE5M2 .RTZ = a := by
+  : div a oneE5M2 .RTZ = a := by
   apply PackedFloat.inj
-  simp [Tests.oneE5M2, div, div_numbers, round, -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
+  simp [oneE5M2, div, div_numbers, round, -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
   unfold BitVec.divSubtractShift
 --  bv_decide
   sorry
-
-
-
---#eval div Tests.minDenormE5M2 Tests.minDenormE5M2 .RNE
---#eval div Tests.oneE5M2 Tests.minNormE5M2 .RNE
