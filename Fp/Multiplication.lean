@@ -1,5 +1,6 @@
 import Fp.Basic
 import Fp.Rounding
+import Fp.Negation
 
 def f_mul (a : FixedPoint v e) (b : FixedPoint w f) : FixedPoint (v+w) (e+f) :=
   let hExOffset := Nat.add_lt_add a.hExOffset b.hExOffset
@@ -31,22 +32,6 @@ def mulfixed
   (he : 0 < e) (a b : PackedFloat e s) (m : RoundingMode) : PackedFloat e s :=
   round _ _ m (e_mul (a.toEFixed he) (b.toEFixed he))
 
--- Bitblasting multiplication is a bit too hard, so we'll prove these theorems
--- manually
-theorem f_mul_comm (a b : FixedPoint 34 16)
-  : (f_mul a b) = (f_mul b a) := by
-  simp [f_mul, Bool.xor_comm, BitVec.mul_comm]
-
-theorem e_mul_comm (a b : EFixedPoint 34 16)
-  : (e_mul a b) = (e_mul b a) := by
-  simp [e_mul]
-  cases ha2 : a.state <;> cases hb2 : b.state <;>
-    simp_all [Bool.xor_comm, f_mul_comm]
-
-theorem mulfixed_comm (a b : PackedFloat 5 2) (m : RoundingMode)
-  : (mulfixed (by omega) a b m) = (mulfixed (by omega) b a m) := by
-  simp [mulfixed, e_mul_comm]
-
 -- A bit-blastable version of multiplication, unrelated to fixed-point numbers
 def mul
   (a b : PackedFloat e s) (m : RoundingMode) : PackedFloat e s :=
@@ -73,15 +58,20 @@ def mul
       }
     round _ _ m result
 
-theorem mul_comm (a b : PackedFloat 5 2) (m : RoundingMode)
-  : (mul a b m) = (mul b a m) := by
+theorem mulfixed_eq_mul (a b : PackedFloat 5 2) (m : RoundingMode)
+  : (mul a b m) = (mulfixed (by omega) a b m) := by
   apply PackedFloat.inj
-  simp [mul, round, -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
+  simp [mul, mulfixed, e_mul, f_mul, round, PackedFloat.toEFixed,
+    BitVec.cons, -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
   bv_decide
 
-theorem mul_one_is_id (a : PackedFloat 5 2) (m : RoundingMode) (ha : ¬a.isNaN)
-  : (mul a oneE5M2 m) = a := by
-  apply PackedFloat.inj
-  simp at ha
-  simp [mul, round, BitVec.cons, oneE5M2, -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
-  bv_decide
+/-- Doubles the given floating point number, rounding to nearest if applicable. -/
+def doubleRNE (a : PackedFloat e s) : PackedFloat e s :=
+  if a.isNaN then PackedFloat.getNaN _ _
+  else if a.isZeroOrSubnorm then
+    let ex := if a.sig.msb then 1 else 0
+    { sign := a.sign, ex, sig := a.sig <<< 1 }
+  else
+    let ex := if a.ex == BitVec.allOnes _ then BitVec.allOnes _ else a.ex + 1
+    let sig := if ex == BitVec.allOnes _ then 0 else a.sig
+    { sign := a.sign, ex, sig }

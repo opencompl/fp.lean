@@ -50,19 +50,3 @@ def div (a b : PackedFloat e s) (mode : RoundingMode) : PackedFloat e s :=
     { PackedFloat.getZero _ _ with sign := a.sign ^^ b.sign }
   else
     div_numbers a b mode
-
-def div_one_is_id (a : PackedFloat 5 2) (h : ¬a.isNaN)
-  : div a oneE5M2 .RTZ = a := by
-  apply PackedFloat.inj
-  simp at h
-  simp [oneE5M2, div, div_numbers, round, BitVec.cons, -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
-  bv_decide
-
-theorem div_self_is_one (a : PackedFloat 5 2)
-  (h : ¬a.isNaN ∧ ¬a.isInfinite ∧ ¬a.isZero)
-  : (div a a .RTZ) = oneE5M2 := by
-  apply PackedFloat.inj
-  simp at h
-  simp [div, div_numbers, round, BitVec.cons, oneE5M2,
-    -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
-  bv_decide

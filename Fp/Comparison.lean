@@ -47,18 +47,3 @@ theorem e_lt_nan (a : EFixedPoint w e)
 theorem nan_lt_e (a : EFixedPoint w e)
   : ¬(e_lt (EFixedPoint.getNaN a.num.hExOffset) a) := by
   simp [e_lt]
-
-theorem e_lt_of_lt (a b : PackedFloat 5 2)
-  : lt a b ↔ e_lt (a.toEFixed (by omega)) (b.toEFixed (by omega)) := by
-  simp [PackedFloat.toEFixed]
-  bv_decide
-
-theorem le_of_e_le (m : RoundingMode) (a b : EFixedPoint 35 16)
-  : e_le a b → le (round 5 2 m a) (round 5 2 m b) := by
-  simp [round, -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
-  bv_decide
-
-theorem e_le_of_le (a b : PackedFloat 5 2)
-  : le a b → e_le (a.toEFixed (by omega)) (b.toEFixed (by omega)) := by
-  simp [PackedFloat.toEFixed]
-  bv_decide

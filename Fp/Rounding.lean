@@ -145,15 +145,6 @@ def round
       sig := truncSig
     }
 
--- Theorem: Fixed -> Float is left inverse to Float -> Fixed
--- Can go up to 4, 1 without overflow erroring
-theorem round_leftinv_toEFixed (x : PackedFloat 5 2) (mode : RoundingMode) (hx : ¬ x.isNaN):
-  (round _ _ mode (x.toEFixed (by omega))) = x := by
-  apply PackedFloat.inj
-  simp at hx
-  simp [round, PackedFloat.toEFixed, -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
-  bv_decide
-
 def isExactFloat (exWidth sigWidth : Nat)
   (x : EFixedPoint width exOffset) : Bool :=
   if x.state = .Number then

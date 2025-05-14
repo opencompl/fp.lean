@@ -149,9 +149,7 @@ have a non-degenerate exponent offset, we need two or more bits in the
 exponent.
 
 NOTE: Assuming IEEE compliance, you technically only need 2^e + s - 2 bits to
-cover the entire range of representable values. Some non-compliant formats have
-a slightly larger range of representable exponents, so we allow for two extra
-bits of precision.
+cover the entire range of representable values.
 -/
 def toEFixed (pf : PackedFloat e s) (he : 0 < e)
   : EFixedPoint (2 ^ e + s) (2 ^ (e - 1) + s - 2) :=

@@ -1,8 +1,8 @@
 name = "fp-lean"
 version = "0.1.0"
 defaultTargets = ["fp-lean"]
-moreLeanArgs = ["--tstack=1024"]
-moreGlobalServerArgs = ["--tstack=1024"]
+moreLeanArgs = ["--tstack=4096"]
+moreGlobalServerArgs = ["--tstack=4096"]
 
 [[lean_lib]]
 name = "Fp"

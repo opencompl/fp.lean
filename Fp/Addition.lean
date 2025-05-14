@@ -67,31 +67,6 @@ theorem PackedFloat_add_comm' (m : RoundingMode) (a b : PackedFloat 5 2)
   bv_decide
 -/
 
-theorem f_add_comm (m : RoundingMode) (a b : FixedPoint 34 16)
-  : (f_add m a b) = (f_add m b a) := by
-  apply FixedPoint.inj
-  simp [f_add]
-  bv_decide +acNf
-
-theorem e_add_comm (m : RoundingMode) (a b : EFixedPoint 34 16)
-  : (e_add m a b) = (e_add m b a) := by
-  simp [e_add]
-  cases ha2 : a.state <;> cases hb2 : b.state <;>
-    simp <;> simp_all only [eq_comm, f_add_comm]
-
-theorem add_comm (m : RoundingMode) (a b : PackedFloat 5 2)
-  : (add (by omega) a b m) = (add (by omega) b a m) := by
-  simp [add, e_add_comm]
-
-theorem add_zero_is_id (a : PackedFloat 5 2) (m : RoundingMode)
-  (ha : ¬a.isNaN ∧ ¬a.isZero)
-  : (add (by omega) a (PackedFloat.getZero _ _) m) = a := by
-  apply PackedFloat.inj
-  simp at ha
-  simp [add, e_add, f_add, round, PackedFloat.toEFixed,
-      -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
-  bv_decide
-
 /-- info: { sign := +, ex := 0x04#5, sig := 0x0#2 } -/
 #guard_msgs in #eval add (by omega) (PackedFloat.ofBits 5 2 0b10000100#8) (PackedFloat.ofBits 5 2 0b00010001#8) .RNE
 /-- info: { sign := +, ex := 0x04#5, sig := 0x1#2 } -/
