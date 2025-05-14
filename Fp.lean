@@ -6,3 +6,5 @@ import Fp.ExtraTheorems
 import Fp.Multiplication
 import Fp.Negation
 import Fp.Rounding
+
+import Fp.TheoremsFP16
