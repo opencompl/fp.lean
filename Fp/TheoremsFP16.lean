@@ -8,6 +8,7 @@ import Fp.Comparison
 
 -- Test file to see how many of the FP8 theorems can be proven on FP16.
 
+set_option maxHeartbeats 2000000
 def oneE5M10 := PackedFloat.ofBits 5 10 0b0011110000000000#16
 def twoE5M10 := PackedFloat.ofBits 5 10 0b0100000000000000#16
 

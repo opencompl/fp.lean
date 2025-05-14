@@ -58,13 +58,6 @@ def mul
       }
     round _ _ m result
 
-theorem mulfixed_eq_mul (a b : PackedFloat 5 2) (m : RoundingMode)
-  : (mul a b m) = (mulfixed (by omega) a b m) := by
-  apply PackedFloat.inj
-  simp [mul, mulfixed, e_mul, f_mul, round, PackedFloat.toEFixed,
-    BitVec.cons, -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
-  bv_decide
-
 /-- Doubles the given floating point number, rounding to nearest if applicable. -/
 def doubleRNE (a : PackedFloat e s) : PackedFloat e s :=
   if a.isNaN then PackedFloat.getNaN _ _
@@ -75,3 +68,11 @@ def doubleRNE (a : PackedFloat e s) : PackedFloat e s :=
     let ex := if a.ex == BitVec.allOnes _ then BitVec.allOnes _ else a.ex + 1
     let sig := if ex == BitVec.allOnes _ then 0 else a.sig
     { sign := a.sign, ex, sig }
+
+/-- `mulfixed` and `mul` implement the same function. -/
+theorem mulfixed_eq_mul (a b : PackedFloat 5 2) (m : RoundingMode)
+  : (mul a b m) = (mulfixed (by omega) a b m) := by
+  apply PackedFloat.inj
+  simp [mul, mulfixed, e_mul, f_mul, round, PackedFloat.toEFixed,
+    BitVec.cons, -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
+  bv_decide (timeout := 60)
