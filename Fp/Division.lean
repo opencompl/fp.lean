@@ -1,7 +1,7 @@
 import Fp.Basic
 import Fp.Rounding
 
-def div_numbers (a b : PackedFloat e s) (mode : RoundingMode) : PackedFloat e s :=
+def div_impl (a b : PackedFloat e s) (mode : RoundingMode) : PackedFloat e s :=
   let sign := a.sign ^^ b.sign
   let sig_a := BitVec.cons (a.ex ≠ 0) a.sig
   let sig_b := BitVec.cons (b.ex ≠ 0) b.sig
@@ -41,6 +41,10 @@ def div_numbers (a b : PackedFloat e s) (mode : RoundingMode) : PackedFloat e s 
     }
     round _ _ mode quot_rshift
 
+/--
+Division of two floating-point numbers, rounded to a floating point number
+using the provided rounding mode.
+-/
 def div (a b : PackedFloat e s) (mode : RoundingMode) : PackedFloat e s :=
   if a.isNaN ∨ b.isNaN ∨ (a.isInfinite ∧ b.isInfinite) ∨ (a.isZero ∧ b.isZero) then
     PackedFloat.getNaN _ _
@@ -49,4 +53,4 @@ def div (a b : PackedFloat e s) (mode : RoundingMode) : PackedFloat e s :=
   else if b.isInfinite then
     { PackedFloat.getZero _ _ with sign := a.sign ^^ b.sign }
   else
-    div_numbers a b mode
+    div_impl a b mode

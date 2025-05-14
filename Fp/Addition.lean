@@ -1,6 +1,12 @@
 import Fp.Basic
 import Fp.Rounding
 
+/--
+Addition of two fixed-point numbers.
+
+When the sum is zero, the sign of the zero is dependent on the provided
+rounding mode.
+-/
 def f_add (mode : RoundingMode) (a b : FixedPoint w e) : FixedPoint (w+1) e :=
   let hExOffset : e < w+1 := by
     exact Nat.lt_add_right 1 a.hExOffset
@@ -34,6 +40,12 @@ def f_add (mode : RoundingMode) (a b : FixedPoint w e) : FixedPoint (w+1) e :=
       hExOffset := hExOffset
     }
 
+/--
+Addition of two extended fixed-point numbers.
+
+When the sum is zero, the sign of the zero is dependent on the provided
+rounding mode.
+-/
 def e_add (mode : RoundingMode) (a b : EFixedPoint w e) : EFixedPoint (w+1) e :=
   open EFixedPoint in
   let hExOffset : e < w + 1 := by
@@ -55,6 +67,10 @@ def e_add (mode : RoundingMode) (a b : EFixedPoint w e) : EFixedPoint (w+1) e :=
     num := f_add mode a.num b.num
   }
 
+/--
+Addition of two floating point numbers, rounded to a floating point number
+using the provided rounding mode.
+-/
 def add (he : 0 < e) (a b : PackedFloat e s) (mode : RoundingMode) : PackedFloat e s :=
   round _ _ mode (e_add mode (a.toEFixed he) (b.toEFixed he))
 

@@ -2,6 +2,9 @@ import Fp.Basic
 import Fp.Rounding
 import Fp.Negation
 
+/--
+Multiplication of two fixed-point numbers.
+-/
 def f_mul (a : FixedPoint v e) (b : FixedPoint w f) : FixedPoint (v+w) (e+f) :=
   let hExOffset := Nat.add_lt_add a.hExOffset b.hExOffset
   let a' : BitVec (v+w) := a.val.setWidth' (by omega)
@@ -12,6 +15,9 @@ def f_mul (a : FixedPoint v e) (b : FixedPoint w f) : FixedPoint (v+w) (e+f) :=
     hExOffset
   }
 
+/--
+Multiplication of two extended fixed-point numbers.
+-/
 def e_mul (a : EFixedPoint v e) (b : EFixedPoint w f) : EFixedPoint (v+w) (e+f) :=
   let hExOffset := Nat.add_lt_add a.num.hExOffset b.num.hExOffset
   open EFixedPoint in
@@ -28,11 +34,22 @@ def e_mul (a : EFixedPoint v e) (b : EFixedPoint w f) : EFixedPoint (v+w) (e+f) 
       num := f_mul a.num b.num
     }
 
+/--
+Multiplication of two floating point numbers, rounded to a floating point
+number using the provided rounding mode.
+
+Implemented using `e_mul`, by conversion to extended fixed-point numbers.
+-/
 def mulfixed
   (he : 0 < e) (a b : PackedFloat e s) (m : RoundingMode) : PackedFloat e s :=
   round _ _ m (e_mul (a.toEFixed he) (b.toEFixed he))
 
--- A bit-blastable version of multiplication, unrelated to fixed-point numbers
+/--
+Multiplication of two floating point numbers, rounded to a floating point
+number using the provided rounding mode.
+
+A bit-blastable version of multiplication, unrelated to fixed-point numbers.
+-/
 def mul
   (a b : PackedFloat e s) (m : RoundingMode) : PackedFloat e s :=
   if a.isNaN || b.isNaN ||
@@ -58,7 +75,9 @@ def mul
       }
     round _ _ m result
 
-/-- Doubles the given floating point number, rounding to nearest if applicable. -/
+/--
+Doubles the given floating point number, rounding to nearest if applicable.
+-/
 def doubleRNE (a : PackedFloat e s) : PackedFloat e s :=
   if a.isNaN then PackedFloat.getNaN _ _
   else if a.isZeroOrSubnorm then
@@ -69,7 +88,9 @@ def doubleRNE (a : PackedFloat e s) : PackedFloat e s :=
     let sig := if ex == BitVec.allOnes _ then 0 else a.sig
     { sign := a.sign, ex, sig }
 
-/-- `mulfixed` and `mul` implement the same function. -/
+/--
+`mulfixed` and `mul` implement the same function.
+-/
 theorem mulfixed_eq_mul (a b : PackedFloat 5 2) (m : RoundingMode)
   : (mul a b m) = (mulfixed (by omega) a b m) := by
   apply PackedFloat.inj

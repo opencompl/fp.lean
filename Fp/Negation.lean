@@ -15,9 +15,15 @@ def e_neg (a : EFixedPoint w e) : EFixedPoint w e :=
   else
     { a with num := f_neg a.num }
 
+/-- Negate a floating-point number, by conversion to a fixed-point number. -/
 def negfixed (he : 0 < e) (a : PackedFloat e s) (mode : RoundingMode) : PackedFloat e s :=
   round _ _ mode (e_neg (a.toEFixed he))
 
+/--
+Negate a floating-point number, by flipping the sign bit.
+
+This implements the same function as `negfixed`, but is much simpler.
+-/
 def neg (a : PackedFloat e s) : PackedFloat e s :=
   if a.isNaN then PackedFloat.getNaN _ _
   else { a with sign := !a.sign }
@@ -31,6 +37,9 @@ theorem e_neg_involutive (a : EFixedPoint 16 8)
   simp [e_neg, f_neg, EFixedPoint.equal_denotation]
   bv_decide
 
+/--
+`negfixed` and `neg` implement the same function.
+-/
 theorem negfixed_eq_neg (a : PackedFloat 5 2) (m : RoundingMode)
   : negfixed (by omega) a m = neg a := by
   apply PackedFloat.inj
@@ -38,6 +47,9 @@ theorem negfixed_eq_neg (a : PackedFloat 5 2) (m : RoundingMode)
     -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
   bv_decide
 
+/--
+Applying `neg` twice gives you the identity.
+-/
 theorem neg_involutive (a : PackedFloat e s) (h : ¬a.isNaN)
   : neg (neg a) = a := by
   have h' : ¬(neg a).isNaN := by

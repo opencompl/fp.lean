@@ -46,6 +46,10 @@ instance : Repr (FixedPoint width ExOffset) where
 -- Concretely, any enum we have must look like a C enum, so we must flatten
 -- all our state into a single enum.
 
+/--
+The "state" of an extended fixed-point number: either NaN, infinity, or a
+number.
+-/
 inductive State : Type
 | NaN : State
 | Infinity : State
@@ -70,8 +74,8 @@ deriving DecidableEq, Repr
 namespace PackedFloat
 
 /--
-Returns the "canonical" NaN for the given floating point format. For example, the canonical NaN for `exWidth` and `sigWidth` 4 is
-`0.1111.1000`.
+Returns the "canonical" NaN for the given floating point format. For example,
+the canonical NaN for `exWidth = 3` and `sigWidth = 4` is `0.111.1000`.
 -/
 @[simp]
 def getNaN (exWidth sigWidth : Nat) : PackedFloat exWidth sigWidth where
@@ -79,6 +83,10 @@ def getNaN (exWidth sigWidth : Nat) : PackedFloat exWidth sigWidth where
   ex := BitVec.allOnes exWidth
   sig := BitVec.ofNat sigWidth (2 ^ (sigWidth - 1))
 
+/--
+Returns the infinity value of the specified sign for the given floating point
+format.
+-/
 @[simp]
 def getInfinity (exWidth sigWidth : Nat) (sign : Bool)
   : PackedFloat exWidth sigWidth where
@@ -86,6 +94,9 @@ def getInfinity (exWidth sigWidth : Nat) (sign : Bool)
   ex := BitVec.allOnes exWidth
   sig := 0
 
+/--
+Returns the (positive) zero value for the given floating point format.
+-/
 @[simp]
 def getZero (exWidth sigWidth : Nat)
   : PackedFloat exWidth sigWidth where
@@ -93,6 +104,9 @@ def getZero (exWidth sigWidth : Nat)
   ex := 0
   sig := 0
 
+/--
+Returns the maximum (magnitude) value for the given sign.
+-/
 @[simp]
 def getMax (exWidth sigWidth : Nat) (sign : Bool)
   : PackedFloat exWidth sigWidth where
@@ -131,12 +145,18 @@ def isZeroOrSubnorm (pf : PackedFloat e s) : Bool :=
 def isZero (pf : PackedFloat e s) : Bool :=
   pf.ex == 0 && pf.sig == 0
 
+/--
+Returns the `PackedFloat` representation for the given `BitVec`.
+-/
 @[simp]
 def ofBits (e s : Nat) (b : BitVec (1+e+s)) : PackedFloat e s where
   sign := b.msb
   ex := (b >>> s).truncate e
   sig := b.truncate s
 
+/--
+Returns the `BitVec` representation for the given `PackedFloat`.
+-/
 @[simp]
 def toBits (x : PackedFloat e s) : BitVec (1+e+s) :=
   BitVec.ofBool x.sign ++ x.ex ++ x.sig
@@ -188,16 +208,8 @@ def toEFixed (pf : PackedFloat e s) (he : 0 < e)
     }
   }
 
-def getValOrNone (pf : PackedFloat e s) (he : 0 < e)
-  : Option Nat :=
-  let result := toEFixed pf he
-  match result.state with
-  | .NaN | .Infinity => none
-  | .Number => some result.num.val.toNat
-
 theorem isNumber_of_isNormOrSubnorm (a : PackedFloat e s)
   : a.isNormOrSubnorm → (a.toEFixed he).state = .Number := by
-  cases a
   simp_all [toEFixed]
 
 end PackedFloat
@@ -310,15 +322,16 @@ def isZero (a : EFixedPoint w e) : Bool :=
 
 end EFixedPoint
 
--- Temp playground
+-- Constants
 
-def oneE5M2 : PackedFloat 5 2 := PackedFloat.ofBits 5 2 0b00111100#8
-
-def twoE5M2 : PackedFloat 5 2 := PackedFloat.ofBits _ _ 0b01000000
-
-def minNormE5M2 := PackedFloat.ofBits 5 2 0b00000100#8
-
-def minDenormE5M2 := PackedFloat.ofBits 5 2 0b00000001#8
+/-- E5M2 floating point representation of 1.0 -/
+def oneE5M2       := PackedFloat.ofBits 5 2 0b00111100#8
+/-- E5M2 floating point representation of 2.0 -/
+def twoE5M2       := PackedFloat.ofBits 5 2 0b01000000#8
+/-- Smallest (positive) normal number in E5M2 floating point. -/
+def minNormE5M2   := PackedFloat.ofBits 5 2 0b00000100#8
+/-- Smallest (positive) subnormal number in E5M2 floating point. -/
+def minSubnormE5M2 := PackedFloat.ofBits 5 2 0b00000001#8
 
 /-- info: { sign := +, ex := 0x0f#5, sig := 0x0#2 } -/
 #guard_msgs in #eval (repr oneE5M2)
@@ -327,13 +340,9 @@ def minDenormE5M2 := PackedFloat.ofBits 5 2 0b00000001#8
 /-- info: { state := num, num := + 0x000010000#34 } -/
 #guard_msgs in #eval oneE5M2.toEFixed (by omega)
 /-- info: { state := num, num := + 0x000000001#34 } -/
-#guard_msgs in #eval minDenormE5M2.toEFixed (by omega)
+#guard_msgs in #eval minSubnormE5M2.toEFixed (by omega)
 /-- info: { state := num, num := + 0x000000004#34 } -/
 #guard_msgs in #eval minNormE5M2.toEFixed (by omega)
-/-- info: some 1 -/
-#guard_msgs in #eval PackedFloat.getValOrNone minDenormE5M2 (by omega)
-/-- info: some 4 -/
-#guard_msgs in #eval PackedFloat.getValOrNone minNormE5M2 (by omega)
 
 /-
 - (@bollu's thought): We may like to have `FixedPoint.toRat : FixedPoint → ℚ`, which

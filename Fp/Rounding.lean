@@ -1,10 +1,20 @@
 import Fp.Basic
 
+/--
+Rounding modes used in floating-point calculations.
+
+Available modes:
+* `RNA`: Round to nearest, tiebreak away from zero.
+* `RNE`: Round to nearest, tiebreak to even significand.
+* `RTN`: Round towards negative infinity.
+* `RTP`: Round towards positive infinity.
+* `RTZ`: Round towards zero.
+-/
 inductive RoundingMode : Type
-| RNE : RoundingMode -- RoundNearestTiesToEven
 | RNA : RoundingMode -- RoundNearestTiesToAway
-| RTP : RoundingMode -- RoundTowardPositive
+| RNE : RoundingMode -- RoundNearestTiesToEven
 | RTN : RoundingMode -- RoundTowardNegative
+| RTP : RoundingMode -- RoundTowardPositive
 | RTZ : RoundingMode -- RoundTowardZero
 deriving DecidableEq
 
@@ -33,6 +43,13 @@ def fls_log (m : Nat) (b : BitVec n) : BitVec n :=
     BitVec.ofNat _ m ||| fls_log (m/2) (b >>> m)
   termination_by m
 
+/--
+Find the position of the last (most significant) set bit in a BitVec.
+
+Returns zero if BitVec is zero. Otherwise, returns the index starting from 1.
+
+Implemented naively using a fold with $O(n)$ steps.
+-/
 @[simp]
 def flsIter (b : BitVec n) : BitVec n :=
   fls' n b (n.le_refl)
@@ -41,18 +58,24 @@ def flsIter (b : BitVec n) : BitVec n :=
 Find the position of the last (most significant) set bit in a BitVec.
 
 Returns zero if BitVec is zero. Otherwise, returns the index starting from 1.
+
+This implements the same function as `negfixed`, but with $O(\log n)$
+steps instead.
 -/
 @[simp]
 def fls (b : BitVec n) : BitVec n :=
   if b == 0 then 0 else 1#_ + fls_log (lastPowerOfTwo n) b
 
+/--
+`flsIter` and `fls` implement the same function.
+-/
 theorem flsIter_eq_fls (b : BitVec 8)
   : flsIter b = fls b := by
   simp
   bv_decide
 
 /--
-Gets the first w bits of the bitvector v.
+Gets the first `w` bits of the bitvector `v`.
 -/
 @[simp]
 def truncateRight (w : Nat) (v : BitVec n) : BitVec w :=
@@ -78,8 +101,11 @@ def shouldRoundAway (m : RoundingMode)
   | .RTN => (guard ∨ sticky) ∧ sign
   | .RTZ => False
 
--- TODO: Implement different rounding modes
--- Less well-behaved when exWidth = 0. This shouldn't be an issue?
+-- Round is less well-behaved when exWidth = 0. This shouldn't be an issue?
+/--
+Round an extended fixed-point number to its nearest floating point number of
+the specified format, with the specified rounding mode.
+-/
 def round
   (exWidth sigWidth : Nat) (mode : RoundingMode) (x : EFixedPoint width exOffset)
   : PackedFloat exWidth sigWidth :=
@@ -145,6 +171,10 @@ def round
       sig := truncSig
     }
 
+/--
+Determine if a fixed-point number has an exact representation in the
+specified floating-point format.
+-/
 def isExactFloat (exWidth sigWidth : Nat)
   (x : EFixedPoint width exOffset) : Bool :=
   if x.state = .Number then

@@ -110,8 +110,6 @@ theorem FP16_add_monotone (a b c : PackedFloat 5 10) (m : RoundingMode) (hc : c.
   exact FP16_e_le_of_le _ _ h
 
 /--
-# Sterbenz Lemma
-
 A floating-point subtraction is computed exactly iff the
 operands are within a factor of two of each other.
 
@@ -181,7 +179,7 @@ theorem FP16_div_one_is_id (a : PackedFloat 5 10) (h : ¬a.isNaN)
   : div a oneE5M10 .RTZ = a := by
   apply PackedFloat.inj
   simp at h
-  simp [oneE5M10, div, div_numbers, round, BitVec.cons, -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
+  simp [oneE5M10, div, div_impl, round, BitVec.cons, -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
   bv_decide
 
 theorem FP16_div_self_is_one (a : PackedFloat 5 10)
@@ -189,7 +187,7 @@ theorem FP16_div_self_is_one (a : PackedFloat 5 10)
   : (div a a .RTZ) = oneE5M10 := by
   apply PackedFloat.inj
   simp at h
-  simp [div, div_numbers, round, BitVec.cons, oneE5M10,
+  simp [div, div_impl, round, BitVec.cons, oneE5M10,
     -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
   bv_decide
 
