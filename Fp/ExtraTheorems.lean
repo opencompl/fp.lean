@@ -6,6 +6,7 @@ import Fp.Division
 import Fp.Multiplication
 import Fp.Comparison
 
+set_option maxHeartbeats 2000000
 -- Comparison
 
 theorem e_lt_of_lt (a b : PackedFloat 5 2)
