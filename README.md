@@ -1,4 +1,4 @@
-## `fp.lean` [![core library](https://github.com/opencompl/fp.lean/actions/workflows/ci.yml/badge.svg)](https://github.com/opencompl/fp.lean/actions/workflows/ci.yml)
+## `fp.lean` [![core library](https://github.com/opencompl/fp.lean/actions/workflows/ci.yml/badge.svg)](https://github.com/opencompl/fp.lean/actions/workflows/ci.yml) [![docs](https://github.com/opencompl/fp.lean/actions/workflows/docs.yml/badge.svg)](https://github.com/opencompl/fp.lean/actions/workflows/docs.yml)
 
 A library for bitblasting IEEE754 floating point multiplication.
 
