@@ -156,7 +156,7 @@ bits of precision.
 def toEFixed (pf : PackedFloat e s) (he : 0 < e)
   : EFixedPoint (2 ^ e + s) (2 ^ (e - 1) + s - 2) :=
   let hExOffset : 2 ^ (e - 1) + s - 2 < 2 ^ e + s := by
-      apply Nat.lt_of_le_of_lt (sub_two_lt)
+      apply Nat.lt_of_le_of_lt (sub_two_le)
       apply Nat.add_lt_add_right
       exact Nat.two_pow_pred_lt_two_pow he
   if pf.isNaN then {

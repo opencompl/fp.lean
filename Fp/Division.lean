@@ -7,12 +7,10 @@ def div_numbers (a b : PackedFloat e s) (mode : RoundingMode) : PackedFloat e s 
   let sig_b := BitVec.cons (b.ex ≠ 0) b.sig
   let div_len := 3*(s+1)
   let unit_pos := 2*(s+1)
+  let dividend := (sig_a.setWidth div_len <<< unit_pos)
+  let divisor := sig_b.setWidth div_len
   -- Do division, collapse remainder to sticky bit
-  let div_res := BitVec.divRec div_len {
-    n := sig_a.setWidth _ <<< unit_pos
-    d := sig_b.setWidth _
-  } (BitVec.DivModState.init div_len)
-  let quot_with_sticky := div_res.q ++ BitVec.ofBool (div_res.r ≠ 0)
+  let quot_with_sticky := (dividend / divisor) ++ BitVec.ofBool ((dividend % divisor) ≠ 0)
   -- Calculate shifts
   let shiftL := if a.ex > 0 then a.ex - 1 else 0
   let shiftR := if b.ex > 0 then b.ex - 1 else 0
@@ -55,10 +53,18 @@ def div (a b : PackedFloat e s) (mode : RoundingMode) : PackedFloat e s :=
 
 -- This theorem is hella broken right now.
 set_option maxHeartbeats 200000
-def div_one_is_id (a : PackedFloat 5 2)
+def div_one_is_id (a : PackedFloat 5 2) (h : ¬a.isNaN)
   : div a oneE5M2 .RTZ = a := by
   apply PackedFloat.inj
-  simp [oneE5M2, div, div_numbers, round, -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
-  unfold BitVec.divSubtractShift
---  bv_decide
-  sorry
+  simp at h
+  simp [oneE5M2, div, div_numbers, round, BitVec.cons, -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
+  bv_decide
+
+theorem div_self_is_one (a : PackedFloat 5 2)
+  (h : ¬a.isNaN ∧ ¬a.isInfinite ∧ ¬a.isZero)
+  : (div a a .RTZ) = oneE5M2 := by
+  apply PackedFloat.inj
+  simp at h
+  simp [div, div_numbers, round, BitVec.cons, oneE5M2,
+    -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
+  bv_decide
