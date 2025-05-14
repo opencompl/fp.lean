@@ -51,8 +51,6 @@ def div (a b : PackedFloat e s) (mode : RoundingMode) : PackedFloat e s :=
   else
     div_numbers a b mode
 
--- This theorem is hella broken right now.
-set_option maxHeartbeats 200000
 def div_one_is_id (a : PackedFloat 5 2) (h : ¬a.isNaN)
   : div a oneE5M2 .RTZ = a := by
   apply PackedFloat.inj
