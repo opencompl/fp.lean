@@ -187,12 +187,8 @@ theorem div_self_is_one (a : PackedFloat 5 2)
 
 -- Other
 
-theorem sterbenzFP16 (a b : PackedFloat 5 10)
-  (h : le a (doubleRNE b) ∧ le b (doubleRNE a))
-  : isExactFloat 5 10 (e_add .RTZ (a.toEFixed (by omega)) ((neg b).toEFixed (by omega)))
-  := by
-  simp [le, doubleRNE] at h
-  simp [e_add, f_add, neg, round, isExactFloat,
-    PackedFloat.toEFixed,
+theorem diff_zero_implies_equal (a b : PackedFloat 5 2) (m : RoundingMode)
+  : (add (by omega) a (neg b) m).isZero → ((a.isZero ∧ b.isZero) ∨ a = b) := by
+  simp [neg, add, e_add, f_add, round, PackedFloat.toEFixed,
     -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
   bv_decide
