@@ -15,7 +15,6 @@ structure FP8Format where
   e : Nat
   m : Nat
   h8 : 1 + e + m = 8
-  he : 0 < e
 
 namespace FP8Format
 theorem h (f : FP8Format)
@@ -40,7 +39,7 @@ def test_add (f : FP8Format) (m : RoundingMode) (a b : BitVec 8) : OpResult :=
   {
     oper := "add"
     mode := m
-    result := [a, b, f.h.mp (PackedFloat.toBits (add f.he a' b' m))].map toDigits
+    result := [a, b, f.h.mp (PackedFloat.toBits (add a' b' m))].map toDigits
   }
 
 def test_div (f : FP8Format) (m : RoundingMode) (a b : BitVec 8) : OpResult :=
@@ -91,13 +90,11 @@ def e5m2 : FP8Format where
   e := 5
   m := 2
   h8 := by omega
-  he := by omega
 
 def e3m4 : FP8Format where
   e := 3
   m := 4
   h8 := by omega
-  he := by omega
 
 def main (args : List String) : IO Unit :=
   if args = ["e5m2"] then
@@ -111,9 +108,9 @@ def main (args : List String) : IO Unit :=
 
 
 /-- info: { sign := -, ex := 0x04#5, sig := 0x1#2 } -/
-#guard_msgs in #eval add (by omega) (PackedFloat.ofBits 5 2 0b00000011#8) (PackedFloat.ofBits 5 2 0b10010001#8) .RNE
+#guard_msgs in #eval add (PackedFloat.ofBits 5 2 0b00000011#8) (PackedFloat.ofBits 5 2 0b10010001#8) .RNE
 /-- info: { sign := +, ex := 0x01#5, sig := 0x2#2 } -/
-#guard_msgs in #eval round 5 2 .RNE (PackedFloat.toEFixed {sign := false, ex := 1#5, sig := 2#2} (by omega))
+#guard_msgs in #eval round 5 2 .RNE (PackedFloat.toEFixed {sign := false, ex := 1#5, sig := 2#2})
 /-- info: { sign := +, ex := 0x1f#5, sig := 0x2#2 } -/
 #guard_msgs in #eval mul (PackedFloat.getZero 5 2) (PackedFloat.getInfinity 5 2 true) .RTZ
 /-- info: { sign := +, ex := 0x1f#5, sig := 0x0#2 } -/

@@ -41,14 +41,14 @@ number using the provided rounding mode.
 Implemented using `e_mul`, by conversion to extended fixed-point numbers.
 -/
 def mulfixed
-  (he : 0 < e) (a b : PackedFloat e s) (m : RoundingMode) : PackedFloat e s :=
-  round _ _ m (e_mul (a.toEFixed he) (b.toEFixed he))
+  (a b : PackedFloat e s) (m : RoundingMode) : PackedFloat e s :=
+  round _ _ m (e_mul a.toEFixed b.toEFixed)
 
 /--
 Multiplication of two floating point numbers, rounded to a floating point
 number using the provided rounding mode.
 
-A bit-blastable version of multiplication, unrelated to fixed-point numbers.
+A bit-blastable version of multiplication, without using `e_mul`.
 -/
 def mul
   (a b : PackedFloat e s) (m : RoundingMode) : PackedFloat e s :=
@@ -92,7 +92,7 @@ def doubleRNE (a : PackedFloat e s) : PackedFloat e s :=
 `mulfixed` and `mul` implement the same function.
 -/
 theorem mulfixed_eq_mul (a b : PackedFloat 5 2) (m : RoundingMode)
-  : (mul a b m) = (mulfixed (by omega) a b m) := by
+  : (mul a b m) = (mulfixed a b m) := by
   apply PackedFloat.inj
   simp [mul, mulfixed, e_mul, f_mul, round, PackedFloat.toEFixed,
     BitVec.cons, -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']

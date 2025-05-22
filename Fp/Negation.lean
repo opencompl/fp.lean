@@ -16,8 +16,8 @@ def e_neg (a : EFixedPoint w e) : EFixedPoint w e :=
     { a with num := f_neg a.num }
 
 /-- Negate a floating-point number, by conversion to a fixed-point number. -/
-def negfixed (he : 0 < e) (a : PackedFloat e s) (mode : RoundingMode) : PackedFloat e s :=
-  round _ _ mode (e_neg (a.toEFixed he))
+def negfixed (a : PackedFloat e s) (mode : RoundingMode) : PackedFloat e s :=
+  round _ _ mode (e_neg a.toEFixed)
 
 /--
 Negate a floating-point number, by flipping the sign bit.
@@ -41,7 +41,7 @@ theorem e_neg_involutive (a : EFixedPoint 16 8)
 `negfixed` and `neg` implement the same function.
 -/
 theorem negfixed_eq_neg (a : PackedFloat 5 2) (m : RoundingMode)
-  : negfixed (by omega) a m = neg a := by
+  : negfixed a m = neg a := by
   apply PackedFloat.inj
   simp [negfixed, neg, e_neg, f_neg, round, PackedFloat.toEFixed,
     -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']

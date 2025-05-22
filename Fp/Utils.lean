@@ -29,3 +29,16 @@ theorem le_two_pow : n ≤ 2^n := by
   case succ ih =>
     simp only [Nat.pow_add_one, Nat.mul_two]
     exact Nat.add_le_add ih Nat.one_le_two_pow
+
+theorem toEFixed_hExOffset : 2 ^ (e - 1) + s - 2 < 2 ^ e + s := by
+  have h1 : 2 ^ (e - 1) + s - 2 ≤ 2^e + s - 2 := by
+    refine Nat.sub_le_sub_right ?_ 2
+    refine Nat.add_le_add_right ?_ s
+    refine Nat.pow_le_pow_right ?_ ?_ <;> omega
+  have h2 : 2^e + s - 2 ≤ 2^e + s - 1 := by omega
+  apply Nat.lt_of_le_of_lt h1
+  apply Nat.lt_of_le_of_lt h2
+  apply Nat.sub_one_lt
+  apply Nat.ne_zero_of_lt
+  refine Nat.lt_add_of_pos_left ?_
+  exact Nat.two_pow_pos e

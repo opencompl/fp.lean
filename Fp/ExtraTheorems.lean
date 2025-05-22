@@ -10,7 +10,7 @@ set_option maxHeartbeats 2000000
 -- Comparison
 
 theorem e_lt_of_lt (a b : PackedFloat 5 2)
-  : lt a b ↔ e_lt (a.toEFixed (by omega)) (b.toEFixed (by omega)) := by
+  : lt a b ↔ e_lt a.toEFixed b.toEFixed := by
   simp [PackedFloat.toEFixed]
   bv_decide
 
@@ -20,7 +20,7 @@ theorem le_of_e_le (m : RoundingMode) (a b : EFixedPoint 35 16)
   bv_decide
 
 theorem e_le_of_le (a b : PackedFloat 5 2)
-  : le a b → e_le (a.toEFixed (by omega)) (b.toEFixed (by omega)) := by
+  : le a b → e_le a.toEFixed b.toEFixed := by
   simp [PackedFloat.toEFixed]
   bv_decide
 
@@ -31,7 +31,7 @@ Every floating point number converted to fixed point form, is an exact
 floating point number.
 -/
 theorem toEFixed_isExactFloat (a : PackedFloat 5 2)
-  : isExactFloat 5 2 (a.toEFixed (by omega)) := by
+  : isExactFloat 5 2 a.toEFixed := by
   simp [isExactFloat, PackedFloat.toEFixed,
     -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
   bv_decide
@@ -42,7 +42,7 @@ floating point and back should not change the denotation.
 -/
 theorem isExactFloat_round_toEFixed (a : EFixedPoint 34 16) (m : RoundingMode)
   (ha : isExactFloat 5 2 a)
-  : a.equal_denotation ((round 5 2 m a).toEFixed (by omega)) := by
+  : a.equal_denotation (round 5 2 m a).toEFixed := by
   simp [isExactFloat, -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq'] at ha
   simp [PackedFloat.toEFixed, round,
     -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
@@ -50,7 +50,7 @@ theorem isExactFloat_round_toEFixed (a : EFixedPoint 34 16) (m : RoundingMode)
 
 /-- Fixed -> Float rounding is left inverse to Float -> Fixed conversion -/
 theorem round_leftinv_toEFixed (x : PackedFloat 5 2) (mode : RoundingMode) (hx : ¬ x.isNaN):
-  (round _ _ mode (x.toEFixed (by omega))) = x := by
+  round _ _ mode x.toEFixed = x := by
   apply PackedFloat.inj
   simp at hx
   simp [round, PackedFloat.toEFixed, -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
@@ -71,18 +71,18 @@ theorem e_add_comm (m : RoundingMode) (a b : EFixedPoint 34 16)
     simp <;> simp_all only [eq_comm, f_add_comm]
 
 theorem add_comm (m : RoundingMode) (a b : PackedFloat 5 2)
-  : (add (by omega) a b m) = (add (by omega) b a m) := by
+  : (add a b m) = (add b a m) := by
   simp [add, e_add_comm]
 
 theorem add_neg_self_isZero_or_isNaN (a : PackedFloat 5 2) (m : RoundingMode)
-  : (add (by omega) a (neg a) m).isZero ∨ (add (by omega) a (neg a) m).isNaN := by
+  : (add a (neg a) m).isZero ∨ (add a (neg a) m).isNaN := by
   simp [add, e_add, f_add, neg, round, PackedFloat.toEFixed,
     -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
   bv_decide
 
 theorem add_zero_is_id (a : PackedFloat 5 2) (m : RoundingMode)
   (ha : ¬a.isNaN ∧ ¬a.isZero)
-  : (add (by omega) a (PackedFloat.getZero _ _) m) = a := by
+  : (add a (PackedFloat.getZero _ _) m) = a := by
   apply PackedFloat.inj
   simp at ha
   simp [add, e_add, f_add, round, PackedFloat.toEFixed,
@@ -96,10 +96,10 @@ theorem e_add_monotone (m : RoundingMode) (a b c : EFixedPoint 34 16)
   bv_decide
 
 theorem add_monotone (a b c : PackedFloat 5 2) (m : RoundingMode) (hc : c.isNormOrSubnorm)
-  : le a b → le (add (by omega) a c m) (add (by omega) b c m) := by
+  : le a b → le (add a c m) (add b c m) := by
   intro h
   apply le_of_e_le
-  have hc' : (c.toEFixed (by omega)).state = .Number :=
+  have hc' : c.toEFixed.state = .Number :=
     PackedFloat.isNumber_of_isNormOrSubnorm c hc
   apply e_add_monotone _ _ _ _ hc'
   exact e_le_of_le _ _ h
@@ -112,7 +112,7 @@ operands are within a factor of two of each other.
 -/
 theorem sterbenz (a b : PackedFloat 5 2)
   (h : le a (doubleRNE b) ∧ le b (doubleRNE a))
-  : isExactFloat 5 2 (e_add .RTZ (a.toEFixed (by omega)) ((neg b).toEFixed (by omega)))
+  : isExactFloat 5 2 (e_add .RTZ a.toEFixed ((neg b).toEFixed))
   := by
   simp [le, doubleRNE] at h
   simp [e_add, f_add, neg, round, isExactFloat,
@@ -136,7 +136,7 @@ theorem mul_one_is_id (a : PackedFloat 5 2) (m : RoundingMode) (ha : ¬a.isNaN)
   bv_decide
 
 theorem add_eq_mul_two (a : PackedFloat 5 2) (m : RoundingMode)
-  : add (by omega) a a m = mul twoE5M2 a m := by
+  : add a a m = mul twoE5M2 a m := by
   apply PackedFloat.inj
   simp [add, e_add, f_add, twoE5M2, mul, round,
     PackedFloat.toEFixed, BitVec.cons,
@@ -164,7 +164,7 @@ theorem e_mul_comm (a b : EFixedPoint 34 16)
     simp_all [Bool.xor_comm, f_mul_comm]
 
 theorem mulfixed_comm (a b : PackedFloat 5 2) (m : RoundingMode)
-  : (mulfixed (by omega) a b m) = (mulfixed (by omega) b a m) := by
+  : (mulfixed a b m) = (mulfixed b a m) := by
   simp [mulfixed, e_mul_comm]
 
 -- Division
@@ -188,7 +188,7 @@ theorem div_self_is_one (a : PackedFloat 5 2)
 -- Other
 
 theorem diff_zero_implies_equal (a b : PackedFloat 5 2) (m : RoundingMode)
-  : (add (by omega) a (neg b) m).isZero → ((a.isZero ∧ b.isZero) ∨ a = b) := by
+  : (add a (neg b) m).isZero → ((a.isZero ∧ b.isZero) ∨ a = b) := by
   simp [neg, add, e_add, f_add, round, PackedFloat.toEFixed,
     -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
   bv_decide
