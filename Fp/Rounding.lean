@@ -159,12 +159,14 @@ def round
           sig := 0
         }
       else
+        -- add 1 to significand
         {
           sign := x.num.sign
           ex
           sig := truncSig + 1
         }
     else
+    -- leave everything the same
     {
       sign := x.num.sign
       ex
