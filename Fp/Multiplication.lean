@@ -76,7 +76,7 @@ def mul
     round _ _ m result
 
 /--
-Doubles the given floating point number, rounding to nearest if applicable.
+Doubles the given floating point number, rounding to infinity if applicable.
 -/
 def doubleRNE (a : PackedFloat e s) : PackedFloat e s :=
   if a.isNaN then PackedFloat.getNaN _ _

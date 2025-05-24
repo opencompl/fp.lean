@@ -159,7 +159,7 @@ def equal_or_nan (a b : EFixedPoint w e) : Bool :=
 /--
 Floating point equality test,
 where we check upto denotation. So, under this definition:
-- NaN = Nan iff thestates are both Nan.
+- NaN = Nan iff the states are both Nan.
 - +Infinity = +Infinity, -Infinity = -Infinity.
 - Number equality is reflexive.
 -/
