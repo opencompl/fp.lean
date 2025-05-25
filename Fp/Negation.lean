@@ -13,6 +13,8 @@ def e_neg (a : EFixedPoint w e) : EFixedPoint w e :=
   else if hInf : a.state = .Infinity then
     getInfinity (!a.num.sign) (by omega)
   else
+    let _ : a.state = .Number := by
+      cases h : a.state <;> simp_all
     { a with num := f_neg a.num }
 
 /-- Negate a floating-point number, by conversion to a fixed-point number. -/
