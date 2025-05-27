@@ -72,13 +72,14 @@ structure EFixedPoint (width exOffset : Nat) where
 deriving DecidableEq, Repr
 
 namespace FixedPoint
-@[simp]
+@[simp, bv_float_normalize]
 def equal (a b : FixedPoint w e) : Bool :=
   (a.val == BitVec.zero _ && b.val == BitVec.zero _)
   || (a.sign == b.sign && a.val == b.val)
 
+@[bv_float_normalize]
 theorem injEq (a b : FixedPoint w e)
-  : (a.sign = b.sign ∧ a.val = b.val) = (a = b) := by
+  : (a = b) = (a.sign = b.sign ∧ a.val = b.val) := by
   cases a
   cases b
   simp only [mk.injEq]
@@ -86,7 +87,7 @@ theorem injEq (a b : FixedPoint w e)
 theorem inj (a b : FixedPoint w e)
   : (a.sign = b.sign ∧ a.val = b.val) → (a = b) := by
   intro h
-  simp_all only [injEq]
+  simp_all only [← injEq]
 
 theorem equal_refl (a : FixedPoint w e)
   : (a.equal a) = true := by
@@ -97,7 +98,7 @@ theorem equal_comm (a b : FixedPoint w e)
   simp [equal, Bool.beq_comm]
   ac_nf
 
-@[simp]
+@[simp, bv_float_normalize]
 def expand (a : FixedPoint w e) (w' e' : Nat)
   (he : e' ≥ e) (hw : w' + e ≥ w + e')
   : FixedPoint w' e' where
@@ -110,9 +111,10 @@ def expand (a : FixedPoint w e) (w' e' : Nat)
 end FixedPoint
 
 namespace EFixedPoint
+@[bv_float_normalize]
 theorem injEq (a b : EFixedPoint w e)
-  : (a.state = b.state ∧ a.num.sign = b.num.sign ∧ a.num.val = b.num.val)
-      = (a = b) := by
+  : (a = b) = (a.state = b.state ∧ a.num.sign = b.num.sign ∧ a.num.val = b.num.val)
+    := by
   cases a
   cases b
   simp only [FixedPoint.injEq, mk.injEq]
@@ -121,9 +123,9 @@ theorem inj (a b : EFixedPoint w e)
   : (a.state = b.state ∧ a.num.sign = b.num.sign ∧ a.num.val = b.num.val)
       → (a = b) := by
   intro h
-  simp_all only [injEq]
+  simp_all only [← injEq]
 
-@[simp]
+@[simp, bv_float_normalize]
 def getNaN (hExOffset : sigWidth < exWidth)
   : EFixedPoint exWidth sigWidth where
   state := .NaN
@@ -133,7 +135,7 @@ def getNaN (hExOffset : sigWidth < exWidth)
     hExOffset
   }
 
-@[simp]
+@[simp, bv_float_normalize]
 def getInfinity (sign : Bool) (hExOffset : sigWidth < exWidth)
   : EFixedPoint exWidth sigWidth where
   state := .Infinity
@@ -143,7 +145,7 @@ def getInfinity (sign : Bool) (hExOffset : sigWidth < exWidth)
     hExOffset
   }
 
-@[simp]
+@[simp, bv_float_normalize]
 def zero (hExOffset : sigWidth < exWidth)
   : EFixedPoint exWidth sigWidth where
   state := .Number
@@ -157,12 +159,12 @@ def zero (hExOffset : sigWidth < exWidth)
 Floating point equality test.
 Recall that `NaN ≠ Nan` under the floating point semantics.
 -/
-@[simp]
+@[simp, bv_float_normalize]
 def equal (a b : EFixedPoint w e) : Bool :=
   (a.state = .Infinity && b.state = .Infinity && a.num.sign == b.num.sign) ||
   (a.state = .Number && b.state = .Number && a.num.equal b.num)
 
-@[simp]
+@[simp, bv_float_normalize]
 def equal_or_nan (a b : EFixedPoint w e) : Bool :=
   a.state = .NaN || b.state = .NaN || a.equal b
 
@@ -173,22 +175,22 @@ where we check up to denotation. So, under this definition:
 - +Infinity = +Infinity, -Infinity = -Infinity.
 - Number equality is reflexive.
 -/
-@[simp]
+@[simp, bv_float_normalize]
 def equal_denotation (a b : EFixedPoint w e) : Bool :=
   (a.state = .NaN && b.state = .NaN) ||
   (a.state = .Infinity && b.state = .Infinity && a.num.sign == b.num.sign) ||
   (a.state = .Number && b.state = .Number &&
    a.num.sign == b.num.sign && a.num.val == b.num.val)
 
-@[simp]
+@[simp, bv_float_normalize]
 def isNaN (a : EFixedPoint w e) : Bool :=
   a.state = .NaN
 
-@[simp]
+@[simp, bv_float_normalize]
 def isZero (a : EFixedPoint w e) : Bool :=
   a.state = .Number && a.num.val == 0
 
-@[simp]
+@[simp, bv_float_normalize]
 def expand (a : EFixedPoint w e) (w' e' : Nat)
   (he : e' ≥ e) (hw : w' + e ≥ w + e')
   : EFixedPoint w' e' where
@@ -203,7 +205,7 @@ namespace PackedFloat
 Returns the "canonical" NaN for the given floating point format. For example,
 the canonical NaN for `exWidth = 3` and `sigWidth = 4` is `0.111.1000`.
 -/
-@[simp]
+@[simp, bv_float_normalize]
 def getNaN (exWidth sigWidth : Nat) : PackedFloat exWidth sigWidth where
   sign := False
   ex := BitVec.allOnes exWidth
@@ -213,7 +215,7 @@ def getNaN (exWidth sigWidth : Nat) : PackedFloat exWidth sigWidth where
 Returns the infinity value of the specified sign for the given floating point
 format.
 -/
-@[simp]
+@[simp, bv_float_normalize]
 def getInfinity (exWidth sigWidth : Nat) (sign : Bool)
   : PackedFloat exWidth sigWidth where
   sign
@@ -223,7 +225,7 @@ def getInfinity (exWidth sigWidth : Nat) (sign : Bool)
 /--
 Returns the (positive) zero value for the given floating point format.
 -/
-@[simp]
+@[simp, bv_float_normalize]
 def getZero (exWidth sigWidth : Nat)
   : PackedFloat exWidth sigWidth where
   sign := False
@@ -233,15 +235,16 @@ def getZero (exWidth sigWidth : Nat)
 /--
 Returns the maximum (magnitude) value for the given sign.
 -/
-@[simp]
+@[simp, bv_float_normalize]
 def getMax (exWidth sigWidth : Nat) (sign : Bool)
   : PackedFloat exWidth sigWidth where
   sign
   ex := BitVec.allOnes exWidth - 1
   sig := BitVec.allOnes sigWidth
 
+@[bv_float_normalize]
 theorem injEq (a b : PackedFloat e s)
-  : (a.sign = b.sign ∧ a.ex = b.ex ∧ a.sig = b.sig) = (a = b) := by
+  : (a = b) = (a.sign = b.sign ∧ a.ex = b.ex ∧ a.sig = b.sig) := by
   cases a
   cases b
   simp [mk.injEq]
@@ -249,32 +252,32 @@ theorem injEq (a b : PackedFloat e s)
 theorem inj (a b : PackedFloat e s)
   : (a.sign = b.sign ∧ a.ex = b.ex ∧ a.sig = b.sig) → (a = b) := by
   intro h
-  simp_all only [injEq]
+  simp_all only [← injEq]
 
-@[simp]
+@[simp, bv_float_normalize]
 def isInfinite (pf : PackedFloat e s) : Bool :=
   pf.ex == BitVec.allOnes e && pf.sig == 0
 
-@[simp]
+@[simp, bv_float_normalize]
 def isNaN (pf : PackedFloat e s) : Bool :=
   pf.ex == BitVec.allOnes e && pf.sig != 0
 
-@[simp]
+@[simp, bv_float_normalize]
 def isNormOrSubnorm (pf : PackedFloat e s) : Bool :=
   pf.ex != BitVec.allOnes e
 
-@[simp]
+@[simp, bv_float_normalize]
 def isZeroOrSubnorm (pf : PackedFloat e s) : Bool :=
   pf.ex == 0
 
-@[simp]
+@[simp, bv_float_normalize]
 def isZero (pf : PackedFloat e s) : Bool :=
   pf.ex == 0 && pf.sig == 0
 
 /--
 Returns the `PackedFloat` representation for the given `BitVec`.
 -/
-@[simp]
+@[simp, bv_float_normalize]
 def ofBits (e s : Nat) (b : BitVec (1+e+s)) : PackedFloat e s where
   sign := b.msb
   ex := (b >>> s).truncate e
@@ -283,7 +286,7 @@ def ofBits (e s : Nat) (b : BitVec (1+e+s)) : PackedFloat e s where
 /--
 Returns the `BitVec` representation for the given `PackedFloat`.
 -/
-@[simp]
+@[simp, bv_float_normalize]
 def toBits (x : PackedFloat e s) : BitVec (1+e+s) :=
   BitVec.ofBool x.sign ++ x.ex ++ x.sig
 
@@ -297,6 +300,7 @@ exponent.
 NOTE: Assuming IEEE compliance, you technically only need 2^e + s - 2 bits to
 cover the entire range of representable values.
 -/
+@[bv_float_normalize]
 def toEFixed (pf : PackedFloat e s)
   : EFixedPoint (2 ^ e + s) (2 ^ (e - 1) + s - 2) :=
   let hExOffset := toEFixed_hExOffset e s
@@ -317,7 +321,7 @@ def toEFixed (pf : PackedFloat e s)
     }
   }
 
-@[simp]
+@[simp, bv_float_normalize]
 def equal_denotation (a b : PackedFloat e s) : Bool :=
   (a.sign == b.sign && a.ex == b.ex && a.sig == b.sig) ||
   (a.isNaN && b.isNaN)
@@ -331,12 +335,16 @@ end PackedFloat
 -- Constants
 
 /-- E5M2 floating point representation of 1.0 -/
+@[bv_float_normalize]
 def oneE5M2       := PackedFloat.ofBits 5 2 0b00111100#8
 /-- E5M2 floating point representation of 2.0 -/
+@[bv_float_normalize]
 def twoE5M2       := PackedFloat.ofBits 5 2 0b01000000#8
 /-- Smallest (positive) normal number in E5M2 floating point. -/
+@[bv_float_normalize]
 def minNormE5M2   := PackedFloat.ofBits 5 2 0b00000100#8
 /-- Smallest (positive) subnormal number in E5M2 floating point. -/
+@[bv_float_normalize]
 def minSubnormE5M2 := PackedFloat.ofBits 5 2 0b00000001#8
 
 /-- info: { sign := +, ex := 0x0f#5, sig := 0x0#2 } -/

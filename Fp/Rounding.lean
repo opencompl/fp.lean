@@ -26,14 +26,14 @@ instance : Repr RoundingMode where
   | .RTP => "RTP"
   | .RTZ => "RTZ"
 
-@[simp]
+@[simp, bv_float_normalize]
 def fls' (m : Nat) (b : BitVec n) (hm : n ≤ m) : BitVec m :=
   if n = 0 then 0
   else if b.msb then n
   else fls' m (BitVec.truncate (n-1) b) (by omega)
   termination_by n
 
-@[simp]
+@[simp, bv_float_normalize]
 def fls_log (m : Nat) (b : BitVec n) : BitVec n :=
   if m = 0 then
     0
@@ -50,7 +50,7 @@ Returns zero if BitVec is zero. Otherwise, returns the index starting from 1.
 
 Implemented naively using a fold with $O(n)$ steps.
 -/
-@[simp]
+@[simp, bv_float_normalize]
 def flsIter (b : BitVec n) : BitVec n :=
   fls' n b (n.le_refl)
 
@@ -62,7 +62,7 @@ Returns zero if BitVec is zero. Otherwise, returns the index starting from 1.
 This implements the same function as `negfixed`, but with $O(\log n)$
 steps instead.
 -/
-@[simp]
+@[simp, bv_float_normalize]
 def fls (b : BitVec n) : BitVec n :=
   if b == 0 then 0 else 1#_ + fls_log (lastPowerOfTwo n) b
 
@@ -77,7 +77,7 @@ theorem flsIter_eq_fls (b : BitVec 8)
 /--
 Gets the first `w` bits of the bitvector `v`.
 -/
-@[simp]
+@[simp, bv_float_normalize]
 def truncateRight (w : Nat) (v : BitVec n) : BitVec w :=
   if hw : n ≤ w then
     -- Have to show that hw ⊢ n + (w - n) = w
@@ -89,7 +89,7 @@ def truncateRight (w : Nat) (v : BitVec n) : BitVec w :=
   else
     BitVec.truncate w (v >>> (n-w))
 
-@[simp]
+@[simp, bv_float_normalize]
 def shouldRoundAway (m : RoundingMode)
   (sign : Bool) (odd : Bool) (v : BitVec n) : Bool :=
   let guard := v.msb
@@ -106,6 +106,7 @@ def shouldRoundAway (m : RoundingMode)
 Round an extended fixed-point number to its nearest floating point number of
 the specified format, with the specified rounding mode.
 -/
+@[bv_float_normalize]
 def round
   (exWidth sigWidth : Nat) (mode : RoundingMode) (x : EFixedPoint width exOffset)
   : PackedFloat exWidth sigWidth :=
@@ -177,6 +178,7 @@ def round
 Determine if a fixed-point number has an exact representation in the
 specified floating-point format.
 -/
+@[bv_float_normalize]
 def isExactFloat (exWidth sigWidth : Nat)
   (x : EFixedPoint width exOffset) : Bool :=
   if x.state = .Number then
@@ -207,11 +209,11 @@ def isExactFloat (exWidth sigWidth : Nat)
   else
     true
 
-/-- info: 0x05#8 -/
+/-- info: 5#8 -/
 #guard_msgs in #eval fls 0x10#8
-/-- info: 0x00#8 -/
+/-- info: 0#8 -/
 #guard_msgs in #eval fls 0#8
-/-- info: 0xa#4 -/
+/-- info: 10#4 -/
 #guard_msgs in #eval truncateRight 4 0xaf#8
-/-- info: 0xaf00#16 -/
+/-- info: 44800#16 -/
 #guard_msgs in #eval truncateRight 16 0xaf#8

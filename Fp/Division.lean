@@ -1,10 +1,11 @@
 import Fp.Basic
 import Fp.Rounding
 
+@[bv_float_normalize]
 def div_impl (a b : PackedFloat e s) (mode : RoundingMode) : PackedFloat e s :=
   let sign := a.sign ^^ b.sign
-  let sig_a := BitVec.cons (a.ex ≠ 0) a.sig
-  let sig_b := BitVec.cons (b.ex ≠ 0) b.sig
+  let sig_a := BitVec.ofBool (a.ex ≠ 0) ++ a.sig
+  let sig_b := BitVec.ofBool (b.ex ≠ 0) ++ b.sig
   let div_len := 3*(s+1)
   let unit_pos := 2*(s+1)
   let dividend := (sig_a.setWidth div_len <<< unit_pos)
@@ -45,6 +46,7 @@ def div_impl (a b : PackedFloat e s) (mode : RoundingMode) : PackedFloat e s :=
 Division of two floating-point numbers, rounded to a floating point number
 using the provided rounding mode.
 -/
+@[bv_float_normalize]
 def div (a b : PackedFloat e s) (mode : RoundingMode) : PackedFloat e s :=
   if a.isNaN ∨ b.isNaN ∨ (a.isInfinite ∧ b.isInfinite) ∨ (a.isZero ∧ b.isZero) then
     PackedFloat.getNaN _ _

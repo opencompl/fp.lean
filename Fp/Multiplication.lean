@@ -5,6 +5,7 @@ import Fp.Negation
 /--
 Multiplication of two fixed-point numbers.
 -/
+@[bv_float_normalize]
 def f_mul (a : FixedPoint v e) (b : FixedPoint w f) : FixedPoint (v+w) (e+f) :=
   let hExOffset := Nat.add_lt_add a.hExOffset b.hExOffset
   let a' : BitVec (v+w) := a.val.setWidth' (by omega)
@@ -18,6 +19,7 @@ def f_mul (a : FixedPoint v e) (b : FixedPoint w f) : FixedPoint (v+w) (e+f) :=
 /--
 Multiplication of two extended fixed-point numbers.
 -/
+@[bv_float_normalize]
 def e_mul (a : EFixedPoint v e) (b : EFixedPoint w f) : EFixedPoint (v+w) (e+f) :=
   let hExOffset := Nat.add_lt_add a.num.hExOffset b.num.hExOffset
   open EFixedPoint in
@@ -40,6 +42,7 @@ number using the provided rounding mode.
 
 Implemented using `e_mul`, by conversion to extended fixed-point numbers.
 -/
+@[bv_float_normalize]
 def mulfixed
   (a b : PackedFloat e s) (m : RoundingMode) : PackedFloat e s :=
   round _ _ m (e_mul a.toEFixed b.toEFixed)
@@ -50,6 +53,7 @@ number using the provided rounding mode.
 
 A bit-blastable version of multiplication, without using `e_mul`.
 -/
+@[bv_float_normalize]
 def mul
   (a b : PackedFloat e s) (m : RoundingMode) : PackedFloat e s :=
   if a.isNaN || b.isNaN ||
@@ -58,8 +62,8 @@ def mul
   else if a.isInfinite || b.isInfinite then
     PackedFloat.getInfinity _ _ (a.sign ^^ b.sign)
   else
-    let sa := BitVec.cons (a.ex != 0) a.sig
-    let sb := BitVec.cons (b.ex != 0) b.sig
+    let sa := BitVec.ofBool (a.ex != 0) ++ a.sig
+    let sb := BitVec.ofBool (b.ex != 0) ++ b.sig
     let shift : BitVec (e+1) :=
       (if a.ex == 0 then 0 else a.ex - 1).setWidth _ +
       (if b.ex == 0 then 0 else b.ex - 1).setWidth _
@@ -80,6 +84,7 @@ def mul
 /--
 Doubles the given floating point number, rounding to infinity if applicable.
 -/
+@[bv_float_normalize]
 def doubleRNE (a : PackedFloat e s) : PackedFloat e s :=
   if a.isNaN then PackedFloat.getNaN _ _
   else if a.isZeroOrSubnorm then
@@ -95,7 +100,5 @@ def doubleRNE (a : PackedFloat e s) : PackedFloat e s :=
 -/
 theorem mulfixed_eq_mul (a b : PackedFloat 5 2) (m : RoundingMode)
   : (mul a b m) = (mulfixed a b m) := by
-  apply PackedFloat.inj
-  simp [mul, mulfixed, e_mul, f_mul, round, PackedFloat.toEFixed,
-    BitVec.cons, -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
+  bv_float_normalize
   bv_decide (timeout := 60)

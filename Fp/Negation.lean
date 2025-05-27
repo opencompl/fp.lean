@@ -2,9 +2,11 @@ import Fp.Basic
 import Fp.Rounding
 
 /-- Negate the fixed point number -/
+@[bv_float_normalize]
 def f_neg (a : FixedPoint w e) : FixedPoint w e := { a with sign := !a.sign }
 
 /-- Negate the extended fixed point number -/
+@[bv_float_normalize]
 def e_neg (a : EFixedPoint w e) : EFixedPoint w e :=
   open EFixedPoint in
   have := a.num.hExOffset
@@ -18,6 +20,7 @@ def e_neg (a : EFixedPoint w e) : EFixedPoint w e :=
     { a with num := f_neg a.num }
 
 /-- Negate a floating-point number, by conversion to a fixed-point number. -/
+@[bv_float_normalize]
 def negfixed (a : PackedFloat e s) (mode : RoundingMode) : PackedFloat e s :=
   round _ _ mode (e_neg a.toEFixed)
 
@@ -26,6 +29,7 @@ Negate a floating-point number, by flipping the sign bit.
 
 This implements the same function as `negfixed`, but is much simpler.
 -/
+@[bv_float_normalize]
 def neg (a : PackedFloat e s) : PackedFloat e s :=
   if a.isNaN then PackedFloat.getNaN _ _
   else { a with sign := !a.sign }
@@ -36,7 +40,7 @@ theorem f_neg_involutive (a : FixedPoint 16 8)
 
 theorem e_neg_involutive (a : EFixedPoint 16 8)
   : (e_neg (e_neg a)).equal_denotation a := by
-  simp [e_neg, f_neg, EFixedPoint.equal_denotation]
+  bv_float_normalize
   bv_decide
 
 /--
@@ -44,9 +48,7 @@ theorem e_neg_involutive (a : EFixedPoint 16 8)
 -/
 theorem negfixed_eq_neg (a : PackedFloat 5 2) (m : RoundingMode)
   : negfixed a m = neg a := by
-  apply PackedFloat.inj
-  simp [negfixed, neg, e_neg, f_neg, round, PackedFloat.toEFixed,
-    -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
+  bv_float_normalize
   bv_decide
 
 /--

@@ -7,6 +7,7 @@ Addition of two fixed-point numbers.
 When the sum is zero, the sign of the zero is dependent on the provided
 rounding mode.
 -/
+@[bv_float_normalize]
 def f_add (mode : RoundingMode) (a b : FixedPoint w e) : FixedPoint (w+1) e :=
   let hExOffset : e < w+1 := by
     exact Nat.lt_add_right 1 a.hExOffset
@@ -46,6 +47,7 @@ Addition of two extended fixed-point numbers.
 When the sum is zero, the sign of the zero is dependent on the provided
 rounding mode.
 -/
+@[bv_float_normalize]
 def e_add (mode : RoundingMode) (a b : EFixedPoint w e) : EFixedPoint (w+1) e :=
   open EFixedPoint in
   let hExOffset : e < w + 1 := by
@@ -71,6 +73,7 @@ def e_add (mode : RoundingMode) (a b : EFixedPoint w e) : EFixedPoint (w+1) e :=
 Addition of two floating point numbers, rounded to a floating point number
 using the provided rounding mode.
 -/
+@[bv_float_normalize]
 def add (a b : PackedFloat e s) (mode : RoundingMode) : PackedFloat e s :=
   round _ _ mode (e_add mode a.toEFixed b.toEFixed)
 

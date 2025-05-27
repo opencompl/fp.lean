@@ -3,6 +3,7 @@ import Fp.Rounding
 import Fp.Addition
 import Fp.Multiplication
 
+@[bv_float_normalize]
 def fma (a b c : PackedFloat e s) (m : RoundingMode)
   : PackedFloat e s :=
   if a.isNaN || b.isNaN ||
@@ -11,8 +12,8 @@ def fma (a b c : PackedFloat e s) (m : RoundingMode)
   else if a.isInfinite || b.isInfinite then
     PackedFloat.getInfinity _ _ (a.sign ^^ b.sign)
   else
-    let sa := BitVec.cons (a.ex != 0) a.sig
-    let sb := BitVec.cons (b.ex != 0) b.sig
+    let sa := BitVec.ofBool (a.ex != 0) ++ a.sig
+    let sb := BitVec.ofBool (b.ex != 0) ++ b.sig
     let shift : BitVec (e+1) :=
       (if a.ex == 0 then 0 else a.ex - 1).setWidth _ +
       (if b.ex == 0 then 0 else b.ex - 1).setWidth _
