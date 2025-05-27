@@ -64,13 +64,15 @@ def mul
       (if a.ex == 0 then 0 else a.ex - 1).setWidth _ +
       (if b.ex == 0 then 0 else b.ex - 1).setWidth _
     let prod := sa.setWidth (2*(s+1)) * sb.setWidth (2*(s+1))
-    let result : EFixedPoint (2*2^e + 2*(s+1)) (2^e + 2*s - 4) :=
+    let result : EFixedPoint (2*2^e + 2*s) (2^e + 2*s - 4) :=
       {
         state := .Number
         num := {
           sign := a.sign ^^ b.sign
           val := prod.setWidth _ <<< shift
-          hExOffset := by omega
+          hExOffset := by
+            have h : 0 < 2^e := Nat.two_pow_pos e
+            omega
         }
       }
     round _ _ m result

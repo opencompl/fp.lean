@@ -1,4 +1,5 @@
 import Fp.Basic
+import Fp.Rounding
 import Fp.Addition
 
 @[simp]
@@ -44,6 +45,6 @@ theorem e_lt_nan (a : EFixedPoint w e)
   : ¬(e_lt a (EFixedPoint.getNaN a.num.hExOffset)) := by
   simp [e_lt]
 
-theorem nan_lt_e (a : EFixedPoint w e)
+theorem nan_e_lt (a : EFixedPoint w e)
   : ¬(e_lt (EFixedPoint.getNaN a.num.hExOffset) a) := by
   simp [e_lt]

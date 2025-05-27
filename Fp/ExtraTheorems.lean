@@ -7,6 +7,21 @@ import Fp.Multiplication
 import Fp.Comparison
 
 set_option maxHeartbeats 2000000
+
+-- Expansion
+
+theorem expand_preserves_value (a : EFixedPoint 34 16) (m : RoundingMode)
+  : round 5 2 m (a.expand 38 18 (by omega) (by omega)) = round 5 2 m a := by
+  apply PackedFloat.inj
+  simp [round, -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
+  bv_decide
+
+theorem expand_self_is_id (a : EFixedPoint w e)
+  : (a.expand w e (by omega) (by omega)) = a := by
+  apply EFixedPoint.inj
+  cases h : a.state <;> simp_all
+
+
 -- Comparison
 
 theorem e_lt_of_lt (a b : PackedFloat 5 2)
@@ -47,10 +62,8 @@ theorem isExactFloat_iff_round_toEFixed (a : EFixedPoint 34 16) (m : RoundingMod
   bv_decide
 
 /-- Fixed -> Float rounding is left inverse to Float -> Fixed conversion -/
-theorem round_leftinv_toEFixed (x : PackedFloat 5 2) (mode : RoundingMode) (hx : ¬ x.isNaN):
-  round _ _ mode x.toEFixed = x := by
-  apply PackedFloat.inj
-  simp at hx
+theorem round_leftinv_toEFixed (x : PackedFloat 5 2) (mode : RoundingMode):
+  (round _ _ mode x.toEFixed).equal_denotation x := by
   simp [round, PackedFloat.toEFixed, -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
   bv_decide
 
@@ -136,10 +149,8 @@ theorem mul_comm (a b : PackedFloat 5 2) (m : RoundingMode)
   simp [mul, round, -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
   bv_decide
 
-theorem mul_one_is_id (a : PackedFloat 5 2) (m : RoundingMode) (ha : ¬a.isNaN)
-  : (mul a oneE5M2 m) = a := by
-  apply PackedFloat.inj
-  simp at ha
+theorem mul_one_is_id (a : PackedFloat 5 2) (m : RoundingMode)
+  : (mul a oneE5M2 m).equal_denotation a := by
   simp [mul, round, BitVec.cons, oneE5M2, -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
   bv_decide
 
@@ -177,10 +188,8 @@ theorem mulfixed_comm (a b : PackedFloat 5 2) (m : RoundingMode)
 
 -- Division
 
-theorem div_one_is_id (a : PackedFloat 5 2) (h : ¬a.isNaN)
-  : div a oneE5M2 .RTZ = a := by
-  apply PackedFloat.inj
-  simp at h
+theorem div_one_is_id (a : PackedFloat 5 2)
+  : (div a oneE5M2 .RTZ).equal_denotation a := by
   simp [oneE5M2, div, div_impl, round, BitVec.cons, -BitVec.shiftLeft_eq', -BitVec.ushiftRight_eq']
   bv_decide
 

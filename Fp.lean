@@ -3,8 +3,8 @@ import Fp.Basic
 import Fp.Comparison
 import Fp.Division
 import Fp.ExtraTheorems
+import Fp.FMA
 import Fp.Multiplication
 import Fp.Negation
 import Fp.Rounding
-
-import Fp.TheoremsFP16
+import Fp.Subtraction

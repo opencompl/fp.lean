@@ -97,6 +97,16 @@ theorem equal_comm (a b : FixedPoint w e)
   simp [equal, Bool.beq_comm]
   ac_nf
 
+@[simp]
+def expand (a : FixedPoint w e) (w' e' : Nat)
+  (he : e' ≥ e) (hw : w' + e ≥ w + e')
+  : FixedPoint w' e' where
+  sign := a.sign
+  val := a.val.setWidth' (by omega) <<< (e' - e)
+  hExOffset := by
+    have hExOffset' := a.hExOffset
+    omega
+
 end FixedPoint
 
 namespace EFixedPoint
@@ -158,7 +168,7 @@ def equal_or_nan (a b : EFixedPoint w e) : Bool :=
 
 /--
 Floating point equality test,
-where we check upto denotation. So, under this definition:
+where we check up to denotation. So, under this definition:
 - NaN = Nan iff the states are both Nan.
 - +Infinity = +Infinity, -Infinity = -Infinity.
 - Number equality is reflexive.
@@ -167,7 +177,8 @@ where we check upto denotation. So, under this definition:
 def equal_denotation (a b : EFixedPoint w e) : Bool :=
   (a.state = .NaN && b.state = .NaN) ||
   (a.state = .Infinity && b.state = .Infinity && a.num.sign == b.num.sign) ||
-  (a.state = .Number && b.state = .Number && a.num.equal b.num)
+  (a.state = .Number && b.state = .Number &&
+   a.num.sign == b.num.sign && a.num.val == b.num.val)
 
 @[simp]
 def isNaN (a : EFixedPoint w e) : Bool :=
@@ -176,6 +187,13 @@ def isNaN (a : EFixedPoint w e) : Bool :=
 @[simp]
 def isZero (a : EFixedPoint w e) : Bool :=
   a.state = .Number && a.num.val == 0
+
+@[simp]
+def expand (a : EFixedPoint w e) (w' e' : Nat)
+  (he : e' ≥ e) (hw : w' + e ≥ w + e')
+  : EFixedPoint w' e' where
+  state := a.state
+  num := a.num.expand w' e' he hw
 
 end EFixedPoint
 
@@ -281,7 +299,7 @@ cover the entire range of representable values.
 -/
 def toEFixed (pf : PackedFloat e s)
   : EFixedPoint (2 ^ e + s) (2 ^ (e - 1) + s - 2) :=
-  let hExOffset := toEFixed_hExOffset
+  let hExOffset := toEFixed_hExOffset e s
   if pf.isNaN then EFixedPoint.getNaN hExOffset
   else if pf.isInfinite then EFixedPoint.getInfinity pf.sign hExOffset
   else {
@@ -298,6 +316,11 @@ def toEFixed (pf : PackedFloat e s)
       hExOffset
     }
   }
+
+@[simp]
+def equal_denotation (a b : PackedFloat e s) : Bool :=
+  (a.sign == b.sign && a.ex == b.ex && a.sig == b.sig) ||
+  (a.isNaN && b.isNaN)
 
 theorem isNumber_of_isNormOrSubnorm (a : PackedFloat e s)
   : a.isNormOrSubnorm → a.toEFixed.state = .Number := by
