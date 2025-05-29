@@ -5,6 +5,7 @@ import Fp.Negation
 import Fp.Division
 import Fp.Multiplication
 import Fp.Comparison
+import Fp.Sqrt
 
 set_option maxHeartbeats 2000000
 
@@ -188,3 +189,5 @@ theorem diff_zero_implies_equal (a b : PackedFloat 5 2) (m : RoundingMode)
   : (add a (neg b) m).isZero → ((a.isZero ∧ b.isZero) ∨ a = b) := by
   bv_float_normalize
   bv_decide
+
+-- Square root

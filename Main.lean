@@ -42,6 +42,15 @@ def test_add (f : FP8Format) (m : RoundingMode) (a b : BitVec 8) : OpResult :=
     result := [a, b, f.h.mp (PackedFloat.toBits (add a' b' m))].map toDigits
   }
 
+def test_sub (f : FP8Format) (m : RoundingMode) (a b : BitVec 8) : OpResult :=
+  let a' := PackedFloat.ofBits f.e f.m (f.h.mpr a)
+  let b' := PackedFloat.ofBits f.e f.m (f.h.mpr b)
+  {
+    oper := "sub"
+    mode := m
+    result := [a, b, f.h.mp (PackedFloat.toBits (sub a' b' m))].map toDigits
+  }
+
 def test_div (f : FP8Format) (m : RoundingMode) (a b : BitVec 8) : OpResult :=
   let a' := PackedFloat.ofBits f.e f.m (f.h.mpr a)
   let b' := PackedFloat.ofBits f.e f.m (f.h.mpr b)
@@ -69,6 +78,22 @@ def test_lt (f : FP8Format) (m : RoundingMode) (a b : BitVec 8) : OpResult :=
     result := [a, b].map toDigits ++ [(lt a' b').toNat.digitChar.toString]
   }
 
+def test_neg (f : FP8Format) (m : RoundingMode) (a : BitVec 8) : OpResult :=
+  let a' := PackedFloat.ofBits f.e f.m (f.h.mpr a)
+  {
+    oper := "neg"
+    mode := m
+    result := [a, 0#8, f.h.mp (PackedFloat.toBits (neg a'))].map toDigits
+  }
+
+def test_sqrt (f : FP8Format) (m : RoundingMode) (a : BitVec 8) : OpResult :=
+  let a' := PackedFloat.ofBits f.e f.m (f.h.mpr a)
+  {
+    oper := "sqrt"
+    mode := m
+    result := [a, 0#8, f.h.mp (PackedFloat.toBits (sqrt a' m))].map toDigits
+  }
+
 def test_binop (f : RoundingMode → BitVec 8 → BitVec 8 → OpResult) : List OpResult :=
   allRoundingModes.flatMap (fun m =>
     (List.range (2 ^ 8)).flatMap (fun a =>
@@ -78,12 +103,20 @@ def test_binop (f : RoundingMode → BitVec 8 → BitVec 8 → OpResult) : List 
     )
   )
 
+def test_unop (f : RoundingMode → BitVec 8 → OpResult) : List OpResult :=
+  allRoundingModes.flatMap (fun m =>
+    (List.range (2 ^ 8)).map (fun a => f m (BitVec.ofNat 8 a))
+  )
+
 def test_all (f : FP8Format) : List OpResult :=
   List.flatten [
     test_binop $ test_add f,
+    test_binop $ test_div f,
     test_binop $ test_lt f,
     test_binop $ test_mul f,
-    test_binop $ test_div f
+    test_unop  $ test_neg f,
+    test_unop  $ test_sqrt f,
+    test_binop $ test_sub f
   ]
 
 def e5m2 : FP8Format where
