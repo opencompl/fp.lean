@@ -75,17 +75,16 @@ void test_binop(std::string name,
 }
 
 // Test binary predicate on 8 bits.
+// We should not need a rounding mode here.
 void test_predi(std::string name, 
-  std::function<bool(traits::rm, ubv, ubv)> f) {
-  for (traits::rm mode : modes) {
-    for (uint64_t i = 0; i < (1<<8); i++) {
-      for (uint64_t j = 0; j < (1<<8); j++) {
-          ubv packed1(8, i), packed2(8, j);
-          bool result = f(mode, packed1, packed2);
-          std::cout << name << "," << to_mode(mode) << "," << \
-              to_bits(packed1) << "," << to_bits(packed2) << "," << \
-              (result ? 1 : 0) << "\n";
-      }
+  std::function<bool(ubv, ubv)> f) {
+  for (uint64_t i = 0; i < (1<<8); i++) {
+    for (uint64_t j = 0; j < (1<<8); j++) {
+        ubv packed1(8, i), packed2(8, j);
+        bool result = f(packed1, packed2);
+        std::cout << name << "," << "RNE" << "," << \
+            to_bits(packed1) << "," << to_bits(packed2) << "," << \
+            (result ? 1 : 0) << "\n";
     }
   }
 }
@@ -101,7 +100,7 @@ int main() {
     return symfpu::pack<traits>(e3m4, uc);
   });
 
-  test_predi("lt", [](traits::rm mode, ubv a, ubv b) {
+  test_predi("lt", [](ubv a, ubv b) {
     uf ua(symfpu::unpack<traits>(e3m4, a)), 
        ub(symfpu::unpack<traits>(e3m4, b));
     
