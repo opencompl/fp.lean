@@ -34,7 +34,7 @@ theorem le_of_e_le (m : RoundingMode) (a b : EFixedPoint 35 16)
   bv_decide
 
 theorem e_le_of_le (a b : PackedFloat 5 2)
-  : le a b → e_le a.toEFixed b.toEFixed := by
+  : le a b ↔ e_le a.toEFixed b.toEFixed := by
   bv_float_normalize
   bv_decide
 
@@ -92,6 +92,7 @@ theorem add_zero_is_id (a : PackedFloat 5 2) (m : RoundingMode)
   bv_float_normalize
   bv_decide
 
+
 theorem e_add_monotone (m : RoundingMode) (a b c : EFixedPoint 34 16)
   (hc : c.state = .Number)
   : e_le a b → e_le (e_add m a c) (e_add m b c) := by
@@ -105,7 +106,7 @@ theorem add_monotone (a b c : PackedFloat 5 2) (m : RoundingMode) (hc : c.isNorm
   have hc' : c.toEFixed.state = .Number :=
     PackedFloat.isNumber_of_isNormOrSubnorm c hc
   apply e_add_monotone _ _ _ _ hc'
-  exact e_le_of_le _ _ h
+  exact (e_le_of_le _ _).mp h
 
 /--
 A floating-point subtraction is computed exactly iff the
