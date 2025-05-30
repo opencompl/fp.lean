@@ -63,8 +63,8 @@ int main() {
     test_binop("add", [](e5m2 a, e5m2 b) { return a + b; });
     test_binop("div", [](e5m2 a, e5m2 b) { return a / b; });
     test_predi("lt" , [](e5m2 a, e5m2 b) { return a < b; });
-    test_binop("max", [](e5m2 a, e5m2 b) { return std::max(a, b); });
-    test_binop("min", [](e5m2 a, e5m2 b) { return std::min(a, b); });
+    test_binop("max", [](e5m2 a, e5m2 b) { return fmax(a, b); });
+    test_binop("min", [](e5m2 a, e5m2 b) { return fmin(a, b); });
     test_binop("mul", [](e5m2 a, e5m2 b) { return a * b; });
     test_unop("neg", [](e5m2 a) { return -a; });
     test_unop("roundToInt", [](e5m2 a) { return std::round(static_cast<long double>(a)); });
