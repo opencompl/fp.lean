@@ -14,7 +14,7 @@ def sqrt_iter (x : BitVec n) (w : BitVec n) (i : Nat) : BitVec (n+1) :=
 
 @[bv_float_normalize]
 def bit_sqrt (x : BitVec n) : BitVec (n+1) :=
-  sqrt_iter x 0 (n/2)
+  sqrt_iter x 0 ((n-1)/2)
 
 @[bv_float_normalize]
 def sqrt_impl (x : PackedFloat e s) (m : RoundingMode) : PackedFloat e s :=
