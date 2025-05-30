@@ -1,6 +1,5 @@
 import Fp.Basic
 import Fp.Rounding
-import Lean.Elab.Term
 
 /-- Implementation of integer square root. -/
 @[bv_float_normalize]

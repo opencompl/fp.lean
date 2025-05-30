@@ -1,11 +1,5 @@
 import Fp
 
--- Idk how to prove in general
-theorem ofBits_inv_toBits (x : PackedFloat 5 2)
-  : PackedFloat.ofBits _ _ (x.toBits) = x := by
-  simp
-  bv_decide
-
 structure OpResult where
   oper : String
   mode : RoundingMode
@@ -142,7 +136,7 @@ def test_unop (f : RoundingMode → BitVec 8 → OpResult) : List OpResult :=
     (List.range (2 ^ 8)).map (fun a => f m (BitVec.ofNat 8 a))
   )
 
-def test_all (f : FP8Format) : List OpResult :=
+def test_all (f : FP8Format) : Thunk (List OpResult) :=
   List.flatten [
     test_unop  $ test_abs f,
     test_binop $ test_add f,
@@ -157,6 +151,27 @@ def test_all (f : FP8Format) : List OpResult :=
     test_binop $ test_sub f
   ]
 
+def test_fma (f : FP8Format) (m : RoundingMode) (a b c : BitVec 8) : OpResult :=
+  let a' := PackedFloat.ofBits f.e f.m (f.h.mpr a)
+  let b' := PackedFloat.ofBits f.e f.m (f.h.mpr b)
+  let c' := PackedFloat.ofBits f.e f.m (f.h.mpr c)
+  {
+    oper := "fma"
+    mode := m
+    result := [a, b, f.h.mp (fma a' b' c' m).toBits].map toDigits
+  }
+
+def test_ternop (f : RoundingMode → BitVec 8 → BitVec 8 → BitVec 8 → OpResult) (_ : Unit) : Thunk (List OpResult) :=
+  allRoundingModes.flatMap (fun m =>
+    (List.range (2 ^ 8)).flatMap (fun a =>
+      (List.range (2 ^ 8)).flatMap (fun b =>
+        (List.range (2 ^ 8)).map (fun c =>
+          f m (BitVec.ofNat 8 a) (BitVec.ofNat 8 b) (BitVec.ofNat 8 c)
+        )
+      )
+    )
+  )
+
 def e5m2 : FP8Format where
   e := 5
   m := 2
@@ -167,14 +182,18 @@ def e3m4 : FP8Format where
   m := 4
   h8 := by omega
 
-def main (args : List String) : IO Unit :=
-  if args = ["e5m2"] then
-    for res in test_all e5m2 do
+def get_long_operation (args : List String) : Thunk (List OpResult) :=
+  match args with
+  | ["e5m2"] => test_all e5m2
+  | ["e3m4"] => test_all e3m4
+  | ["fma"]  => test_ternop (test_fma e5m2) ()
+  | _ => Thunk.pure []
+
+def main (args : List String) : IO Unit := do
+  if args != [] then do
+    for res in Thunk.get (get_long_operation args) do
       IO.println (repr res)
-  else if args = ["e3m4"] then
-    for res in test_all e3m4 do
-      IO.println (repr res)
-  else
+  else do
       IO.println "Please run with command line arg e5m2 or e3m4"
 
 
