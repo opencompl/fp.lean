@@ -186,7 +186,8 @@ def get_long_operation (args : List String) : Thunk (List OpResult) :=
   match args with
   | ["e5m2"] => test_all e5m2
   | ["e3m4"] => test_all e3m4
-  | ["fma"]  => test_ternop (test_fma e5m2) ()
+  | ["fma_e5m2"]  => test_ternop (test_fma e5m2) ()
+  | ["fma_e3m4"]  => test_ternop (test_fma e3m4) ()
   | _ => Thunk.pure []
 
 def main (args : List String) : IO Unit := do
