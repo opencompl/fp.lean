@@ -211,7 +211,8 @@ def isExactFloat (exWidth sigWidth : Nat)
 
 @[bv_float_normalize]
 def roundToInt (mode : RoundingMode) (x : PackedFloat e s) : PackedFloat e s :=
-  if x.isNaN || x.isInfinite then x
+  if x.isNaN then PackedFloat.getNaN e s
+  else if x.isInfinite then x
   else
     let ef := x.toEFixed.num.val
     let offset := 2 ^ (e - 1) + s - 2

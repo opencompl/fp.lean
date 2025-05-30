@@ -58,13 +58,38 @@ void test_predi(std::string name, std::function<bool(e5m2,e5m2)> f) {
     }
 }
 
+e5m2 ieee_max(e5m2 a, e5m2 b) {
+    long double a2 = static_cast<long double>(a);
+    long double b2 = static_cast<long double>(b);
+    // Enforce that max(+0, -0) = +0
+    if (a2 == 0 && b2 == 0) {
+        if (std::signbit(a2))
+            return b;
+        return a;
+    }
+    return fmax(a2, b2);
+}
+
+e5m2 ieee_min(e5m2 a, e5m2 b) {
+    long double a2 = static_cast<long double>(a);
+    long double b2 = static_cast<long double>(b);
+    // Enforce that min(+0, -0) = -0
+    if (a2 == 0 && b2 == 0) {
+        if (std::signbit(a2))
+            return a;
+        return b;
+    }
+    return fmin(a2, b2);
+}
+
+
 int main() {
     test_unop("abs", [](e5m2 a) { return std::fabs(static_cast<long double>(a)); });
     test_binop("add", [](e5m2 a, e5m2 b) { return a + b; });
     test_binop("div", [](e5m2 a, e5m2 b) { return a / b; });
     test_predi("lt" , [](e5m2 a, e5m2 b) { return a < b; });
-    test_binop("max", [](e5m2 a, e5m2 b) { return fmax(static_cast<long double>(a), static_cast<long double>(b)); });
-    test_binop("min", [](e5m2 a, e5m2 b) { return fmin(static_cast<long double>(a), static_cast<long double>(b)); });
+    test_binop("max", [](e5m2 a, e5m2 b) { return ieee_max(a,b); });
+    test_binop("min", [](e5m2 a, e5m2 b) { return ieee_min(a,b); });
     test_binop("mul", [](e5m2 a, e5m2 b) { return a * b; });
     test_unop("neg", [](e5m2 a) { return -a; });
     test_unop("roundToInt", [](e5m2 a) { return std::round(static_cast<long double>(a)); }, "RNA");
