@@ -22,11 +22,11 @@ std::bitset<8> to_bits(e5m2 arg, bool normNaN = false) {
     return argBits;
 }
 
-void test_unop(std::string name, std::function<e5m2(e5m2)> f) {
+void test_unop(std::string name, std::function<e5m2(e5m2)> f, std::string mode = "RNE") {
     for (uint16_t i = 0; i < (1 << 8); i++) {
         e5m2 a = cons_fp8(static_cast<uint8_t>(i));
         e5m2 c = f(a);
-        std::cout << name << "," << "RNE" << "," << \
+        std::cout << name << "," << mode << "," << \
             to_bits(a) << "," << "00000000" << "," << \
             to_bits(c, true) << "\n";
     }
@@ -67,8 +67,8 @@ int main() {
     test_binop("min", [](e5m2 a, e5m2 b) { return fmin(static_cast<long double>(a), static_cast<long double>(b)); });
     test_binop("mul", [](e5m2 a, e5m2 b) { return a * b; });
     test_unop("neg", [](e5m2 a) { return -a; });
-    test_unop("roundToInt", [](e5m2 a) { return std::round(static_cast<long double>(a)); });
-    test_unop("sqrt", [](e5m2 a) { return sqrt(a); });
+    test_unop("roundToInt", [](e5m2 a) { return std::round(static_cast<long double>(a)); }, "RNA");
+    test_unop("sqrt", [](e5m2 a) { return sqrt(static_cast<long double>(a)); });
     test_binop("sub", [](e5m2 a, e5m2 b) { return a - b; });
     return 0;
 }

@@ -231,6 +231,7 @@ def roundToInt (mode : RoundingMode) (x : PackedFloat e s) : PackedFloat e s :=
     }
     round e s mode res
 
+#eval roundToInt .RNE (PackedFloat.ofBits 5 2 0b00111000#8)
 /-- info: 5#8 -/
 #guard_msgs in #eval fls 0x10#8
 /-- info: 0#8 -/

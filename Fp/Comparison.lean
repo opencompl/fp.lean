@@ -57,12 +57,14 @@ def ge (a b : PackedFloat w e) : Bool :=
 
 @[bv_float_normalize]
 def flt_min (a b : PackedFloat e s) : PackedFloat e s :=
-  if b.isNaN || lt a b || (a.isZero && b.isZero && a.isSignMinus) then a
+  if a.isNaN && b.isNaN then PackedFloat.getNaN e s
+  else if b.isNaN || lt a b || (a.isZero && b.isZero && a.isSignMinus) then a
   else b
 
 @[bv_float_normalize]
 def flt_max (a b : PackedFloat e s) : PackedFloat e s :=
-  if b.isNaN || gt a b || (a.isZero && b.isZero && b.isSignMinus) then a
+  if a.isNaN && b.isNaN then PackedFloat.getNaN e s
+  else if b.isNaN || gt a b || (a.isZero && b.isZero && b.isSignMinus) then a
   else b
 
 theorem e_lt_nan (a : EFixedPoint w e)

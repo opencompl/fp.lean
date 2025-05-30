@@ -27,7 +27,9 @@ def sqrt_impl (x : PackedFloat e s) (m : RoundingMode) : PackedFloat e s :=
   let sqrtResult := bit_sqrt sqrtOperand
   let bias : Nat := 2^(e-1) - 1
   let exp' : BitVec e :=
-    if x.ex ≥ bias
+    if x.ex = 0 then
+      bias - bias / 2
+    else if x.ex ≥ bias
     then (x.ex - bias) / 2 + bias
     else bias - (bias - x.ex + 1) / 2
   let result : EFixedPoint (2^e + s + 2) (bias + s + 2) :=
@@ -55,3 +57,6 @@ theorem square_sqrt_is_id (x : BitVec 5)
   : bit_sqrt (x.setWidth 10 * x.setWidth _) = x.setWidth _ <<< 1 := by
   bv_float_normalize
   bv_decide
+
+#eval sqrt (PackedFloat.ofBits 5 2 0b00000001#8) .RNE
+#eval sqrt (oneE5M2) .RNE
