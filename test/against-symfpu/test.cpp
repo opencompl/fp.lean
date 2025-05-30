@@ -8,6 +8,7 @@
 #include "symfpu/core/divide.h"
 #include "symfpu/core/sign.h"
 #include "symfpu/core/sqrt.h"
+#include "symfpu/core/convert.h"
 #include <bitset>
 #include <functional>
 
@@ -90,6 +91,20 @@ void test_unop(std::string name,
   }
 }
 
+// Test binary operation on 8 bits (no rounding mode).
+void test_binop_noround(std::string name, 
+  std::function<ubv(ubv, ubv)> f) {
+  for (uint64_t i = 0; i < (1<<8); i++) {
+    for (uint64_t j = 0; j < (1<<8); j++) {
+        ubv packed1(8, i), packed2(8, j);
+        ubv result = f(packed1, packed2);
+        std::cout << name << "," << "RNE" << "," << \
+            to_bits(packed1) << "," << to_bits(packed2) << "," << \
+            to_bits(result, true) << "\n";
+    }
+  }
+}
+
 // Test unary operation on 8 bits (no rounding mode).
 void test_unop_noround(std::string name, 
   std::function<ubv(ubv)> f) {
@@ -119,6 +134,12 @@ void test_predi(std::string name,
 
 traits::fpt e3m4(3,5);
 int main() {
+  test_unop_noround("abs", [](ubv a) {
+    uf ua(symfpu::unpack<traits>(e3m4, a));
+    uf uc(symfpu::absolute<traits>(e3m4, ua));
+    return symfpu::pack<traits>(e3m4, uc);
+  });
+
   test_binop("add", [](traits::rm mode, ubv a, ubv b) {
     uf ua(symfpu::unpack<traits>(e3m4, a)), 
        ub(symfpu::unpack<traits>(e3m4, b));
@@ -143,6 +164,23 @@ int main() {
     
     return symfpu::lessThan<traits>(e3m4, ua, ub);
   });
+  test_binop_noround("max", [](ubv a, ubv b) {
+    uf ua(symfpu::unpack<traits>(e3m4, a)), 
+       ub(symfpu::unpack<traits>(e3m4, b));
+    
+    uf uc(symfpu::max<traits>(e3m4, ua, ub, ua.getSign()));
+    
+    return symfpu::pack<traits>(e3m4, uc);
+  });
+
+  test_binop_noround("min", [](ubv a, ubv b) {
+    uf ua(symfpu::unpack<traits>(e3m4, a)), 
+       ub(symfpu::unpack<traits>(e3m4, b));
+    
+    uf uc(symfpu::min<traits>(e3m4, ua, ub, ua.getSign()));
+    
+    return symfpu::pack<traits>(e3m4, uc);
+  });
 
   test_binop("mul", [](traits::rm mode, ubv a, ubv b) {
     uf ua(symfpu::unpack<traits>(e3m4, a)), 
@@ -159,13 +197,13 @@ int main() {
     return symfpu::pack<traits>(e3m4, uc);
   });
 
-  /* I think sqrt is actively broken rn
-  test_unop("sqrt", [](traits::rm mode, ubv a) {
-    uf ua(symfpu::unpack<traits>(e3m4, a));
-    uf uc(symfpu::sqrt<traits>(e3m4, mode, ua));
-    return symfpu::pack<traits>(e3m4, uc);
-  });
-  */
+  // I think sqrt is actively broken rn
+  // test_unop("sqrt", [](traits::rm mode, ubv a) {
+  //   uf ua(symfpu::unpack<traits>(e3m4, a));
+  //   uf uc(symfpu::sqrt<traits>(e3m4, mode, ua));
+  //   return symfpu::pack<traits>(e3m4, uc);
+  // });
+
 
   test_binop("sub", [](traits::rm mode, ubv a, ubv b) {
     uf ua(symfpu::unpack<traits>(e3m4, a)), 
@@ -175,6 +213,14 @@ int main() {
     
     return symfpu::pack<traits>(e3m4, uc);
   });
+  
+  // roundToInt is also broken rn
+  // test_unop("roundToInt", [](traits::rm mode, ubv a) {
+  //   uf ua(symfpu::unpack<traits>(e3m4, a));
+  //   uf uc(symfpu::roundToIntegral<traits>(e3m4, mode, ua));
+  //   return symfpu::pack<traits>(e3m4, uc);
+  // });
+  
   return 0;
 }
 
