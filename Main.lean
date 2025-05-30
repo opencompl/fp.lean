@@ -158,7 +158,7 @@ def test_fma (f : FP8Format) (m : RoundingMode) (a b c : BitVec 8) : OpResult :=
   {
     oper := "fma"
     mode := m
-    result := [a, b, f.h.mp (fma a' b' c' m).toBits].map toDigits
+    result := [a, b, c, f.h.mp (fma a' b' c' m).toBits].map toDigits
   }
 
 def test_ternop (f : RoundingMode → BitVec 8 → BitVec 8 → BitVec 8 → OpResult) (_ : Unit) : Thunk (List OpResult) :=
