@@ -21,12 +21,14 @@ def sqrt_impl (x : PackedFloat e s) (m : RoundingMode) : PackedFloat e s :=
   let sig' :=
     BitVec.ofBool (x.ex != 0) ++ x.sig
   let sig_shift : BitVec (s+2) :=
-    sig'.setWidth _ <<< BitVec.ofBool ((x.ex &&& 1#e) == 0)
+    sig'.setWidth _ <<< BitVec.ofBool (x.ex != 0 && (x.ex &&& 1#e) == 0)
   let sqrtOperand : BitVec (2*s+6) := sig_shift.setWidth _ <<< (s+4)
   let sqrtResult := bit_sqrt sqrtOperand
   let bias : Nat := 2^(e-1) - 1
   let exp' : BitVec e :=
-    if x.ex ≥ bias
+    if x.ex = 0 then
+      (bias + 1) / 2
+    else if x.ex ≥ bias
     then (x.ex - bias) / 2 + bias
     else bias - (bias - x.ex + 1) / 2
   let result : EFixedPoint (2^e + s + 2) (bias + s + 2) :=
