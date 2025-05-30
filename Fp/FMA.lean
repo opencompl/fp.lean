@@ -14,7 +14,7 @@ def fma (a b c : PackedFloat e s) (m : RoundingMode)
     if c.isInfinite && c.sign != interSign then
       PackedFloat.getNaN _ _
     else
-      PackedFloat.getInfinity _ _ (a.sign ^^ b.sign)
+      PackedFloat.getInfinity _ _ interSign
   else
     let sa := BitVec.ofBool (a.ex != 0) ++ a.sig
     let sb := BitVec.ofBool (b.ex != 0) ++ b.sig

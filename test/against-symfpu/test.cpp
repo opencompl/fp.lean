@@ -204,7 +204,6 @@ int main() {
   //   return symfpu::pack<traits>(e3m4, uc);
   // });
 
-
   test_binop("sub", [](traits::rm mode, ubv a, ubv b) {
     uf ua(symfpu::unpack<traits>(e3m4, a)), 
        ub(symfpu::unpack<traits>(e3m4, b));
