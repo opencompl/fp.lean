@@ -2,6 +2,7 @@
 #include <iostream>
 #include <functional>
 #include <cmath>
+#include <cstdlib>
 
 typedef flx::floatx<5,2> e5m2;
 typedef flx::float_traits<e5m2>::backend_float bf;
