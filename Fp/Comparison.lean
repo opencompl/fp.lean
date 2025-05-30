@@ -36,7 +36,7 @@ def gt (a b : PackedFloat w e) : Bool :=
     x.ex < y.ex || (x.ex == y.ex && x.sig < y.sig)
   ¬a.isNaN && ¬b.isNaN && (
     (a.sign && b.sign && comp a b) ||
-    (a.sign && ¬b.sign && (¬a.isZero || ¬b.isZero)) ||
+    (¬a.sign && b.sign && (¬a.isZero || ¬b.isZero)) ||
     (¬a.sign && ¬b.sign && comp b a)
   )
 
