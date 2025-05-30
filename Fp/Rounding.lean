@@ -209,6 +209,28 @@ def isExactFloat (exWidth sigWidth : Nat)
   else
     true
 
+@[bv_float_normalize]
+def roundToInt (mode : RoundingMode) (x : PackedFloat e s) : PackedFloat e s :=
+  if x.isNaN || x.isInfinite then x
+  else
+    let ef := x.toEFixed.num.val
+    let offset := 2 ^ (e - 1) + s - 2
+    let before := ef >>> offset
+    let after := ef <<< (2 ^ e + s - offset)
+    let integral := before +
+      (if shouldRoundAway mode x.sign (before.getLsbD 0) after then 1 else 0)
+    let res : EFixedPoint (2^e + s) 0 := {
+      state := .Number
+      num := {
+        sign := x.sign
+        val := integral
+        hExOffset := by
+          have h := Nat.two_pow_pos e
+          omega
+      }
+    }
+    round e s mode res
+
 /-- info: 5#8 -/
 #guard_msgs in #eval fls 0x10#8
 /-- info: 0#8 -/

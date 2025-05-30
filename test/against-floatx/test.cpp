@@ -58,11 +58,15 @@ void test_predi(std::string name, std::function<bool(e5m2,e5m2)> f) {
 }
 
 int main() {
+    test_unop("abs", [](e5m2 a) { return std::fabsl(a); });
     test_binop("add", [](e5m2 a, e5m2 b) { return a + b; });
     test_binop("div", [](e5m2 a, e5m2 b) { return a / b; });
     test_predi("lt" , [](e5m2 a, e5m2 b) { return a < b; });
+    test_binop("max", [](e5m2 a, e5m2 b) { return std::max(a, b); });
+    test_binop("min", [](e5m2 a, e5m2 b) { return std::min(a, b); });
     test_binop("mul", [](e5m2 a, e5m2 b) { return a * b; });
     test_unop("neg", [](e5m2 a) { return -a; });
+    test_unop("roundToInt", [](e5m2 a) { return std::roundl(a); });
     test_unop("sqrt", [](e5m2 a) { return sqrt(a); });
     test_binop("sub", [](e5m2 a, e5m2 b) { return a - b; });
     return 0;

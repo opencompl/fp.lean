@@ -34,6 +34,11 @@ def neg (a : PackedFloat e s) : PackedFloat e s :=
   if a.isNaN then PackedFloat.getNaN _ _
   else { a with sign := !a.sign }
 
+@[bv_float_normalize]
+def abs (a : PackedFloat e s) : PackedFloat e s :=
+  if a.isNaN then PackedFloat.getNaN _ _
+  else { a with sign := false }
+
 theorem f_neg_involutive (a : FixedPoint 16 8)
   : f_neg (f_neg a) = a := by
   simp [f_neg]

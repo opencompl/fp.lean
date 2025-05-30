@@ -39,7 +39,7 @@ def test_add (f : FP8Format) (m : RoundingMode) (a b : BitVec 8) : OpResult :=
   {
     oper := "add"
     mode := m
-    result := [a, b, f.h.mp (PackedFloat.toBits (add a' b' m))].map toDigits
+    result := [a, b, f.h.mp (add a' b' m).toBits].map toDigits
   }
 
 def test_sub (f : FP8Format) (m : RoundingMode) (a b : BitVec 8) : OpResult :=
@@ -48,7 +48,7 @@ def test_sub (f : FP8Format) (m : RoundingMode) (a b : BitVec 8) : OpResult :=
   {
     oper := "sub"
     mode := m
-    result := [a, b, f.h.mp (PackedFloat.toBits (sub a' b' m))].map toDigits
+    result := [a, b, f.h.mp (sub a' b' m).toBits].map toDigits
   }
 
 def test_div (f : FP8Format) (m : RoundingMode) (a b : BitVec 8) : OpResult :=
@@ -57,7 +57,7 @@ def test_div (f : FP8Format) (m : RoundingMode) (a b : BitVec 8) : OpResult :=
   {
     oper := "div"
     mode := m
-    result := [a, b, f.h.mp (PackedFloat.toBits (div a' b' m))].map toDigits
+    result := [a, b, f.h.mp (div a' b' m).toBits].map toDigits
   }
 
 def test_mul (f : FP8Format) (m : RoundingMode) (a b : BitVec 8) : OpResult :=
@@ -66,7 +66,7 @@ def test_mul (f : FP8Format) (m : RoundingMode) (a b : BitVec 8) : OpResult :=
   {
     oper := "mul"
     mode := m
-    result := [a, b, f.h.mp (PackedFloat.toBits (mul a' b' m))].map toDigits
+    result := [a, b, f.h.mp (mul a' b' m).toBits].map toDigits
   }
 
 def test_lt (f : FP8Format) (m : RoundingMode) (a b : BitVec 8) : OpResult :=
@@ -78,12 +78,46 @@ def test_lt (f : FP8Format) (m : RoundingMode) (a b : BitVec 8) : OpResult :=
     result := [a, b].map toDigits ++ [(lt a' b').toNat.digitChar.toString]
   }
 
+def test_min (f : FP8Format) (m : RoundingMode) (a b : BitVec 8) : OpResult :=
+  let a' := PackedFloat.ofBits f.e f.m (f.h.mpr a)
+  let b' := PackedFloat.ofBits f.e f.m (f.h.mpr b)
+  {
+    oper := "min"
+    mode := m
+    result := [a, b, f.h.mp (flt_min a' b').toBits].map toDigits
+  }
+
+def test_max (f : FP8Format) (m : RoundingMode) (a b : BitVec 8) : OpResult :=
+  let a' := PackedFloat.ofBits f.e f.m (f.h.mpr a)
+  let b' := PackedFloat.ofBits f.e f.m (f.h.mpr b)
+  {
+    oper := "max"
+    mode := m
+    result := [a, b, f.h.mp (flt_max a' b').toBits].map toDigits
+  }
+
 def test_neg (f : FP8Format) (m : RoundingMode) (a : BitVec 8) : OpResult :=
   let a' := PackedFloat.ofBits f.e f.m (f.h.mpr a)
   {
     oper := "neg"
     mode := m
     result := [a, 0#8, f.h.mp (PackedFloat.toBits (neg a'))].map toDigits
+  }
+
+def test_abs (f : FP8Format) (m : RoundingMode) (a : BitVec 8) : OpResult :=
+  let a' := PackedFloat.ofBits f.e f.m (f.h.mpr a)
+  {
+    oper := "abs"
+    mode := m
+    result := [a, 0#8, f.h.mp (PackedFloat.toBits (abs a'))].map toDigits
+  }
+
+def test_roundToInt (f : FP8Format) (m : RoundingMode) (a : BitVec 8) : OpResult :=
+  let a' := PackedFloat.ofBits f.e f.m (f.h.mpr a)
+  {
+    oper := "roundToInt"
+    mode := m
+    result := [a, 0#8, f.h.mp (PackedFloat.toBits (roundToInt m a'))].map toDigits
   }
 
 def test_sqrt (f : FP8Format) (m : RoundingMode) (a : BitVec 8) : OpResult :=
@@ -110,11 +144,15 @@ def test_unop (f : RoundingMode → BitVec 8 → OpResult) : List OpResult :=
 
 def test_all (f : FP8Format) : List OpResult :=
   List.flatten [
+    test_unop  $ test_abs f,
     test_binop $ test_add f,
     test_binop $ test_div f,
     test_binop $ test_lt f,
+    test_binop $ test_max f,
+    test_binop $ test_min f,
     test_binop $ test_mul f,
     test_unop  $ test_neg f,
+    test_unop  $ test_roundToInt f,
     test_unop  $ test_sqrt f,
     test_binop $ test_sub f
   ]

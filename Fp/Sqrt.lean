@@ -1,5 +1,6 @@
 import Fp.Basic
 import Fp.Rounding
+import Lean.Elab.Term
 
 /-- Implementation of integer square root. -/
 @[bv_float_normalize]
@@ -26,9 +27,7 @@ def sqrt_impl (x : PackedFloat e s) (m : RoundingMode) : PackedFloat e s :=
   let sqrtResult := bit_sqrt sqrtOperand
   let bias : Nat := 2^(e-1) - 1
   let exp' : BitVec e :=
-    if x.ex = 0 then
-      (bias + 1) / 2
-    else if x.ex ≥ bias
+    if x.ex ≥ bias
     then (x.ex - bias) / 2 + bias
     else bias - (bias - x.ex + 1) / 2
   let result : EFixedPoint (2^e + s + 2) (bias + s + 2) :=

@@ -31,6 +31,16 @@ def lt (a b : PackedFloat w e) : Bool :=
   )
 
 @[simp, bv_float_normalize]
+def gt (a b : PackedFloat w e) : Bool :=
+  let comp (x y : PackedFloat w e) :=
+    x.ex < y.ex || (x.ex == y.ex && x.sig < y.sig)
+  ¬a.isNaN && ¬b.isNaN && (
+    (a.sign && b.sign && comp a b) ||
+    (a.sign && ¬b.sign && (¬a.isZero || ¬b.isZero)) ||
+    (¬a.sign && ¬b.sign && comp b a)
+  )
+
+@[simp, bv_float_normalize]
 def eq (a b : PackedFloat w e) : Bool :=
   ¬a.isNaN && ¬b.isNaN && (
     (a.sign == b.sign && a.ex == b.ex && a.sig == b.sig) ||
@@ -40,6 +50,20 @@ def eq (a b : PackedFloat w e) : Bool :=
 @[simp, bv_float_normalize]
 def le (a b : PackedFloat w e) : Bool :=
   eq a b || lt a b
+
+@[simp, bv_float_normalize]
+def ge (a b : PackedFloat w e) : Bool :=
+  eq a b || gt a b
+
+@[bv_float_normalize]
+def flt_min (a b : PackedFloat e s) : PackedFloat e s :=
+  if b.isNaN || lt a b || (a.isZero && b.isZero && a.isSignMinus) then a
+  else b
+
+@[bv_float_normalize]
+def flt_max (a b : PackedFloat e s) : PackedFloat e s :=
+  if b.isNaN || gt a b || (a.isZero && b.isZero && b.isSignMinus) then a
+  else b
 
 theorem e_lt_nan (a : EFixedPoint w e)
   : ¬(e_lt a (EFixedPoint.getNaN a.num.hExOffset)) := by

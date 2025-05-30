@@ -274,6 +274,18 @@ def isZeroOrSubnorm (pf : PackedFloat e s) : Bool :=
 def isZero (pf : PackedFloat e s) : Bool :=
   pf.ex == 0 && pf.sig == 0
 
+@[simp, bv_float_normalize]
+def isNZero (pf : PackedFloat e s) : Bool :=
+  pf.ex == 0 && pf.sig == 0 && pf.sign
+
+@[simp, bv_float_normalize]
+def isPZero (pf : PackedFloat e s) : Bool :=
+  pf.ex == 0 && pf.sig == 0 && !pf.sign
+
+@[simp, bv_float_normalize]
+def isSignMinus (pf : PackedFloat e s) : Bool :=
+  pf.sign
+
 /--
 Returns the `PackedFloat` representation for the given `BitVec`.
 -/
