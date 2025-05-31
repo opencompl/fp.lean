@@ -22,24 +22,30 @@ def sqrt_impl (x : PackedFloat e s) (m : RoundingMode) : PackedFloat e s :=
     BitVec.ofBool (x.ex != 0) ++ x.sig
   let sig_shift : BitVec (s+2) :=
     sig'.setWidth _ <<< BitVec.ofBool (x.ex != 0 && (x.ex &&& 1#e) == 0)
-  let sqrtOperand : BitVec (2*s+6) := sig_shift.setWidth _ <<< (s+4)
+  -- We require a shift that
+  -- * Is at least 2s to ensure enough precision bits
+  -- * moves the units digit to an even position so the square root is correct
+  let align_shift := if s % 2 = 0 then 2*s else 2*s + 1
+  let sqrtOperand : BitVec (3*s+4) := sig_shift.setWidth _ <<< align_shift
   let sqrtResult := bit_sqrt sqrtOperand
   let bias : Nat := 2^(e-1) - 1
+  -- Determine exponent
   let exp' : BitVec e :=
     if x.ex = 0 then
       bias - bias / 2
     else if x.ex ≥ bias
     then (x.ex - bias) / 2 + bias
     else bias - (bias - x.ex + 1) / 2
-  let result : EFixedPoint (2^e + s + 2) (bias + s + 2) :=
+  let result : EFixedPoint (2^(e-1) + 3*s + 4) (bias + (s + align_shift) / 2) :=
     {
       state := .Number
       num := {
         sign := false
         val := sqrtResult.setWidth _ <<< (exp' - 1)
         hExOffset := by
-          have h := Nat.two_pow_pos e
-          have h2 := two_pow_sub_one_le_two_pow e
+          have h := Nat.two_pow_pos (e-1)
+          have h2 : align_shift ≤ 2*s+2 := by
+            by_cases (s % 2 = 0) <;> simp_all [align_shift]
           omega
       }
     }
