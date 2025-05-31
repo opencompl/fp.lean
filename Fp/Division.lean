@@ -6,8 +6,8 @@ def div_impl (a b : PackedFloat e s) (mode : RoundingMode) : PackedFloat e s :=
   let sign := a.sign ^^ b.sign
   let sig_a := BitVec.ofBool (a.ex ≠ 0) ++ a.sig
   let sig_b := BitVec.ofBool (b.ex ≠ 0) ++ b.sig
-  let div_len := 3*s+2
-  let unit_pos := 2*s+1
+  let div_len := 3*(s+1)
+  let unit_pos := 2*(s+1)
   let dividend := (sig_a.setWidth div_len <<< unit_pos)
   let divisor := sig_b.setWidth div_len
   -- Do division, collapse remainder to sticky bit
