@@ -123,6 +123,15 @@ theorem sterbenz (a b : PackedFloat 5 2)
 
 -- Negation
 
+theorem f_neg_involutive (a : FixedPoint 16 8)
+  : f_neg (f_neg a) = a := by
+  simp [f_neg]
+
+theorem e_neg_involutive (a : EFixedPoint 16 8)
+  : (e_neg (e_neg a)).equal_denotation a := by
+  bv_float_normalize
+  bv_decide
+
 /--
 Negation will always map an exact float to an exact float.
 -/
@@ -131,7 +140,36 @@ theorem neg_exact (a : PackedFloat 5 2)
   bv_float_normalize
   bv_decide
 
+/--
+`negfixed` and `neg` implement the same function.
+-/
+theorem negfixed_eq_neg (a : PackedFloat 5 2) (m : RoundingMode)
+  : negfixed a m = neg a := by
+  bv_float_normalize
+  bv_decide
+
+/--
+Applying `neg` twice gives you the identity.
+-/
+theorem neg_involutive (a : PackedFloat e s) (h : ¬a.isNaN)
+  : neg (neg a) = a := by
+  have h' : ¬(neg a).isNaN := by
+    unfold neg
+    simp only [h]
+    simp_all
+  unfold neg at h' ⊢
+  simp only [h', h]
+  simp_all
+
 -- Multiplication
+
+/--
+`mulfixed` and `mul` implement the same function.
+-/
+theorem mulfixed_eq_mul (a b : PackedFloat 5 2) (m : RoundingMode)
+  : (mul a b m) = (mulfixed a b m) := by
+  bv_float_normalize
+  bv_decide (timeout := 60)
 
 theorem mul_comm (a b : PackedFloat 5 2) (m : RoundingMode)
   : (mul a b m) = (mul b a m) := by
@@ -191,3 +229,16 @@ theorem diff_zero_implies_equal (a b : PackedFloat 5 2) (m : RoundingMode)
   bv_decide
 
 -- Square root
+
+-- Remainder
+
+/--
+Modulo by a value will always be less or equal to the value itself
+(by magnitude).
+-/
+theorem rem_le_abs_self (a b : PackedFloat 5 2)
+  (h : a.isNormOrSubnorm)
+  (hb : ¬b.isNaN ∧ ¬b.isZero)
+  : le (remainder a b) (abs b) := by
+    bv_float_normalize
+    bv_decide

@@ -1,7 +1,9 @@
 import Fp.Basic
 import Fp.Rounding
 
-/-- Implementation of integer square root. -/
+/--
+Implementation of integer square root. Remainder bit appended to the end of the result.
+-/
 @[bv_float_normalize]
 def sqrt_iter (x : BitVec n) (w : BitVec n) (i : Nat) : BitVec (n+1) :=
   let w' := w.setWidth (2*n) ||| (1#_ <<< i)

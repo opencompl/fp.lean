@@ -94,11 +94,3 @@ def doubleRNE (a : PackedFloat e s) : PackedFloat e s :=
     let ex := if a.ex == BitVec.allOnes _ then BitVec.allOnes _ else a.ex + 1
     let sig := if ex == BitVec.allOnes _ then 0 else a.sig
     { sign := a.sign, ex, sig }
-
-/--
-`mulfixed` and `mul` implement the same function.
--/
-theorem mulfixed_eq_mul (a b : PackedFloat 5 2) (m : RoundingMode)
-  : (mul a b m) = (mulfixed a b m) := by
-  bv_float_normalize
-  bv_decide (timeout := 60)

@@ -232,6 +232,32 @@ def roundToInt (mode : RoundingMode) (x : PackedFloat e s) : PackedFloat e s :=
     }
     round e s mode res
 
+namespace PackedFloat
+def ofRat (e s : Nat) (mode : RoundingMode) (num : Int) (den : Nat) : PackedFloat e s :=
+  let width := 2^e + s + 2
+  let exOffset := 2^(e-1) + s
+  let adjustedNum : Nat := num.natAbs <<< (exOffset - 1)
+  let roundBit := if adjustedNum % den != 0 then 1 else 0
+  let quot := (adjustedNum / den) * 2 + roundBit
+  if quot.log2 ≥ width then
+    PackedFloat.getInfinity e s (num < 0)
+  else
+    let result : EFixedPoint width exOffset := {
+      state := .Number
+      num := {
+        sign := num < 0
+        val := BitVec.ofNat width quot
+        hExOffset := by
+          have hexp0 : 0 < 2^e := Nat.two_pow_pos _
+          have hexp1 : 2^(e-1) ≤ 2^e := two_pow_sub_one_le_two_pow e
+          omega
+      }
+    }
+    round e s mode result
+end PackedFloat
+
+/-- info: { sign := +, ex := 0x0f#5, sig := 0x0#2 } -/
+#guard_msgs in #eval PackedFloat.ofRat 5 2 .RNE 1 1
 /-- info: 5#8 -/
 #guard_msgs in #eval fls 0x10#8
 /-- info: 0#8 -/
