@@ -9,6 +9,7 @@
 #include "symfpu/core/sign.h"
 #include "symfpu/core/sqrt.h"
 #include "symfpu/core/convert.h"
+#include "symfpu/core/remainder.h"
 #include <bitset>
 #include <functional>
 
@@ -203,6 +204,15 @@ int main() {
   //   uf uc(symfpu::sqrt<traits>(e3m4, mode, ua));
   //   return symfpu::pack<traits>(e3m4, uc);
   // });
+
+  test_binop_noround("rem", [](ubv a, ubv b) {
+    uf ua(symfpu::unpack<traits>(e3m4, a)), 
+       ub(symfpu::unpack<traits>(e3m4, b));
+    
+    uf uc(symfpu::remainder<traits>(e3m4, ua, ub));
+    
+    return symfpu::pack<traits>(e3m4, uc);
+  });
 
   test_binop("sub", [](traits::rm mode, ubv a, ubv b) {
     uf ua(symfpu::unpack<traits>(e3m4, a)), 
