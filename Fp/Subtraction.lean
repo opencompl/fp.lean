@@ -27,8 +27,3 @@ Implemented as a negation followed by an addition.
 @[bv_float_normalize]
 def sub (a b : PackedFloat e s) (mode : RoundingMode) : PackedFloat e s :=
   add a (neg b) mode
-
-theorem subfixed_eq_sub (a b : PackedFloat 5 2) (m : RoundingMode)
-  : subfixed a b m = sub a b m := by
-  bv_float_normalize
-  bv_decide

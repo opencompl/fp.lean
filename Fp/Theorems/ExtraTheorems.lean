@@ -162,6 +162,13 @@ theorem neg_involutive (a : PackedFloat e s) (h : ¬a.isNaN)
   simp only [h', h]
   simp_all
 
+-- Subtraction
+
+theorem subfixed_eq_sub (a b : PackedFloat 5 2) (m : RoundingMode)
+  : subfixed a b m = sub a b m := by
+  bv_float_normalize
+  bv_decide
+
 -- Multiplication
 
 /--
