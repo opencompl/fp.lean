@@ -8,6 +8,8 @@ import Fp.Comparison
 import Fp.Sqrt
 
 set_option maxHeartbeats 2000000
+set_option trace.Meta.Tactic.sat true
+set_option trace.profiler true
 
 -- Expansion
 

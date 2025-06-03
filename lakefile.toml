@@ -7,6 +7,9 @@ moreGlobalServerArgs = ["--tstack=4096"]
 [[lean_lib]]
 name = "Fp"
 
+[[lean_lib]]
+name = "Fp.Theorems"
+
 [[lean_exe]]
 name = "fp-lean"
 root = "Main"
