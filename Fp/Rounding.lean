@@ -27,11 +27,12 @@ instance : Repr RoundingMode where
   | .RTZ => "RTZ"
 
 @[simp, bv_float_normalize]
-def fls' (m : Nat) (b : BitVec n) (hm : n ≤ m) : BitVec m :=
-  if n = 0 then 0
-  else if b.msb then n
-  else fls' m (BitVec.truncate (n-1) b) (by omega)
-  termination_by n
+def fls' (m : Nat) (b : BitVec n) (hm : n ≤ m) : BitVec m := match n with
+  | 0 => 0
+  | n' + 1 =>
+    if b.msb then n
+    else fls' m (BitVec.truncate n' b) (by omega)
+
 
 @[simp, bv_float_normalize]
 def fls_log (m : Nat) (b : BitVec n) : BitVec n :=
@@ -51,26 +52,23 @@ Returns zero if BitVec is zero. Otherwise, returns the index starting from 1.
 Implemented naively using a fold with $O(n)$ steps.
 -/
 @[simp, bv_float_normalize]
-def flsIter (b : BitVec n) : BitVec n :=
+def fls (b : BitVec n) : BitVec n :=
   fls' n b (n.le_refl)
 
 /--
 Find the position of the last (most significant) set bit in a BitVec.
 
 Returns zero if BitVec is zero. Otherwise, returns the index starting from 1.
-
-This implements the same function as `negfixed`, but with $O(\log n)$
-steps instead.
 -/
 @[simp, bv_float_normalize]
-def fls (b : BitVec n) : BitVec n :=
+def flsLog (b : BitVec n) : BitVec n :=
   if b == 0 then 0 else 1#_ + fls_log (lastPowerOfTwo n) b
 
 /--
-`flsIter` and `fls` implement the same function.
+`flsLog` and `fls` implement the same function.
 -/
 theorem flsIter_eq_fls (b : BitVec 8)
-  : flsIter b = fls b := by
+  : flsLog b = fls b := by
   simp
   bv_decide
 

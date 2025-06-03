@@ -5,18 +5,17 @@ import Fp.Rounding
 Implementation of integer square root. Remainder bit appended to the end of the result.
 -/
 @[bv_float_normalize]
-def sqrt_iter (x : BitVec n) (w : BitVec n) (i : Nat) : BitVec (n+1) :=
+def sqrt_iter (i : Nat) (x : BitVec n) (w : BitVec n) : BitVec (n+1) :=
   let w' := w.setWidth (2*n) ||| (1#_ <<< i)
   let flag := (BitVec.ofBool (w' * w' ≤ x.setWidth (2*n))).setWidth n <<< i
   let w'' := w ||| flag
-  if i = 0 then
-      w'' ++ BitVec.ofBool (w''.setWidth (2*n) * w''.setWidth (2*n) ≠ x.setWidth (2*n))
-  else
-    sqrt_iter x w'' (i-1)
+  match i with
+  | 0 => w'' ++ BitVec.ofBool (w''.setWidth (2*n) * w''.setWidth (2*n) ≠ x.setWidth (2*n))
+  | j+1 => sqrt_iter j x w''
 
 @[bv_float_normalize]
 def bit_sqrt (x : BitVec n) : BitVec (n+1) :=
-  sqrt_iter x 0 ((n-1)/2)
+  sqrt_iter ((n-1)/2) x 0
 
 @[bv_float_normalize]
 def sqrt_impl (x : PackedFloat e s) (m : RoundingMode) : PackedFloat e s :=

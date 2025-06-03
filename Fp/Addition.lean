@@ -37,7 +37,7 @@ def f_add (mode : RoundingMode) (a b : FixedPoint w e) : FixedPoint (w+1) e :=
     -- When rounding mode is RTN we should instead return -0.0
     {
       sign := mode = .RTN
-      val := BitVec.zero _
+      val := 0#_
       hExOffset := hExOffset
     }
 

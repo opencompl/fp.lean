@@ -6,10 +6,9 @@ import Fp.Division
 import Fp.Multiplication
 import Fp.Comparison
 import Fp.Sqrt
+import Fp.Remainder
 
 set_option maxHeartbeats 2000000
-set_option trace.Meta.Tactic.sat true
-set_option trace.profiler true
 
 -- Expansion
 
@@ -233,7 +232,6 @@ theorem diff_zero_implies_equal (a b : PackedFloat 5 2) (m : RoundingMode)
 -- Square root
 
 -- Remainder
-
 /--
 Modulo by a value will always be less or equal to the value itself
 (by magnitude).

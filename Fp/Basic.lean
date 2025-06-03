@@ -74,7 +74,7 @@ deriving DecidableEq, Repr
 namespace FixedPoint
 @[simp, bv_float_normalize]
 def equal (a b : FixedPoint w e) : Bool :=
-  (a.val == BitVec.zero _ && b.val == BitVec.zero _)
+  (a.val == 0#_ && b.val == 0#_)
   || (a.sign == b.sign && a.val == b.val)
 
 @[bv_float_normalize]
