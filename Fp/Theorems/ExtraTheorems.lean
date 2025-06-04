@@ -1,12 +1,4 @@
-import Fp.Basic
-import Fp.Rounding
-import Fp.Addition
-import Fp.Negation
-import Fp.Division
-import Fp.Multiplication
-import Fp.Comparison
-import Fp.Sqrt
-import Fp.Remainder
+import Fp
 
 set_option maxHeartbeats 2000000
 
@@ -249,3 +241,16 @@ theorem rem_le_abs_self (a b : PackedFloat 5 2)
   : le (remainder a b) (abs b) := by
     bv_float_normalize
     bv_decide
+
+/--
+Remainder is degree 1 homogeneous with respect to doubling.
+
+The remainder function itself has the homogeneity property; the reason this
+theorem may not apply to arbitrary multiplication is that the multiplication
+has to be exact.
+-/
+theorem remainder_doubling_homogeneous (a b : PackedFloat 5 2)
+  (h : ¬(doubleRNE a).isInfinite ∧ ¬(doubleRNE b).isInfinite)
+  : doubleRNE (remainder a b) = remainder (doubleRNE a) (doubleRNE b) := by
+  bv_float_normalize
+  bv_decide
