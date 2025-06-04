@@ -254,6 +254,14 @@ def ofRat (e s : Nat) (mode : RoundingMode) (num : Int) (den : Nat) : PackedFloa
     round e s mode result
 end PackedFloat
 
+theorem ofRat_one_is_oneE5M2 : PackedFloat.ofRat 5 2 .RNE 1 1 = oneE5M2 := by
+  simp [PackedFloat.ofRat, Nat.log2]
+  decide
+
+theorem ofRat_two_is_twoE5M2 : PackedFloat.ofRat 5 2 .RNE 2 1 = twoE5M2 := by
+  simp [PackedFloat.ofRat, Nat.log2]
+  decide
+
 /-- info: { sign := +, ex := 0x0f#5, sig := 0x0#2 } -/
 #guard_msgs in #eval PackedFloat.ofRat 5 2 .RNE 1 1
 /-- info: 5#8 -/
