@@ -259,7 +259,7 @@ theorem remainder_doubling_homogeneous (a b : PackedFloat 5 2)
 Remainder is degree 1 homogeneous with respect to multiplication, when said
 multiplication is exact.
 -/
-theorem remainder_doubling_homogeneous (a b c : PackedFloat 5 2)
+theorem remainder_homogeneous (a b c : PackedFloat 5 2)
   (ha : isExactFloat 5 2 (e_mul a.toEFixed c.toEFixed) ∧ ¬a.isInfinite)
   (hb : isExactFloat 5 2 (e_mul b.toEFixed c.toEFixed) ∧ ¬b.isInfinite)
   (hc : isExactFloat 5 2 (e_mul (remainder a b).toEFixed c.toEFixed)
