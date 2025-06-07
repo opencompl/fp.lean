@@ -1,5 +1,4 @@
 import Fp
-#eval PackedFloat.ofRat 3 4 .RNE 2 1
 
 @[bv_float_normalize]
 def twoE3M4 : PackedFloat 3 4 := PackedFloat.ofBits 3 4 0b01000000#8
