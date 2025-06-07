@@ -131,7 +131,7 @@ def test_rem (f : FP8Format) (m : RoundingMode) (a b : BitVec 8) : OpResult :=
     result := [a, b, f.h.mp (remainder a' b').toBits].map toDigits
   }
 
-def test_binop (f : RoundingMode → BitVec 8 → BitVec 8 → OpResult) : List OpResult :=
+def test_binop (f : RoundingMode → BitVec 8 → BitVec 8 → OpResult) : Thunk (List OpResult) :=
   allRoundingModes.flatMap (fun m =>
     (List.range (2 ^ 8)).flatMap (fun a =>
       (List.range (2 ^ 8)).map (fun b =>
@@ -140,25 +140,25 @@ def test_binop (f : RoundingMode → BitVec 8 → BitVec 8 → OpResult) : List 
     )
   )
 
-def test_unop (f : RoundingMode → BitVec 8 → OpResult) : List OpResult :=
+def test_unop (f : RoundingMode → BitVec 8 → OpResult) : Thunk (List OpResult) :=
   allRoundingModes.flatMap (fun m =>
     (List.range (2 ^ 8)).map (fun a => f m (BitVec.ofNat 8 a))
   )
 
 def test_all (f : FP8Format) : Thunk (List OpResult) :=
   List.flatten [
-    test_unop  $ test_abs f,
-    test_binop $ test_add f,
-    test_binop $ test_div f,
-    test_binop $ test_lt f,
-    test_binop $ test_max f,
-    test_binop $ test_min f,
-    test_binop $ test_mul f,
-    test_unop  $ test_neg f,
-    test_binop $ test_rem f,
-    test_unop  $ test_roundToInt f,
-    test_unop  $ test_sqrt f,
-    test_binop $ test_sub f
+    Thunk.get $ test_unop  $ test_abs f,
+    Thunk.get $ test_binop $ test_add f,
+    Thunk.get $ test_binop $ test_div f,
+    Thunk.get $ test_binop $ test_lt f,
+    Thunk.get $ test_binop $ test_max f,
+    Thunk.get $ test_binop $ test_min f,
+    Thunk.get $ test_binop $ test_mul f,
+    Thunk.get $ test_unop  $ test_neg f,
+    Thunk.get $ test_binop $ test_rem f,
+    Thunk.get $ test_unop  $ test_roundToInt f,
+    Thunk.get $ test_unop  $ test_sqrt f,
+    Thunk.get $ test_binop $ test_sub f
   ]
 
 def test_fma (f : FP8Format) (m : RoundingMode) (a b c : BitVec 8) : OpResult :=
@@ -198,6 +198,18 @@ def get_long_operation (args : List String) : Thunk (List OpResult) :=
   | ["e3m4"] => test_all e3m4
   | ["fma_e5m2"]  => test_ternop (test_fma e5m2) ()
   | ["fma_e3m4"]  => test_ternop (test_fma e3m4) ()
+  | ["abs"] => test_unop $ (test_abs e3m4)
+  | ["add"] => test_binop $ (test_add e3m4)
+  | ["div"] => test_binop $ (test_div e3m4)
+  | ["lt"] => test_binop $ (test_lt e3m4)
+  | ["max"] => test_binop $ (test_max e3m4)
+  | ["min"] => test_binop $ (test_min e3m4)
+  | ["mul"] => test_binop $ (test_mul e3m4)
+  | ["neg"] => test_unop $ (test_neg e3m4)
+  | ["rem"] => test_binop $ (test_rem e3m4)
+  | ["sqrt"] => test_unop $ (test_sqrt e3m4)
+  | ["sub"] => test_binop $ (test_sub e3m4)
+  | ["roundToInt"] => test_unop $ (test_roundToInt e3m4)
   | _ => Thunk.pure []
 
 def main (args : List String) : IO Unit := do
