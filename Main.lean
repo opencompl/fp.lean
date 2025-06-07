@@ -145,6 +145,15 @@ def test_unop (f : RoundingMode → BitVec 8 → OpResult) : Thunk (List OpResul
     (List.range (2 ^ 8)).map (fun a => f m (BitVec.ofNat 8 a))
   )
 
+def test_unop_multi (f : RoundingMode → BitVec 8 → OpResult) : Thunk (List OpResult) :=
+  allRoundingModes.flatMap (fun m =>
+    (List.range (2 ^ 8)).flatMap (fun a =>
+      (List.range (2 ^ 8)).map (fun b =>
+        f m (BitVec.ofNat 8 a)
+      )
+    )
+  )
+
 def test_all (f : FP8Format) : Thunk (List OpResult) :=
   List.flatten [
     Thunk.get $ test_unop  $ test_abs f,
@@ -198,18 +207,18 @@ def get_long_operation (args : List String) : Thunk (List OpResult) :=
   | ["e3m4"] => test_all e3m4
   | ["fma_e5m2"]  => test_ternop (test_fma e5m2) ()
   | ["fma_e3m4"]  => test_ternop (test_fma e3m4) ()
-  | ["abs"] => test_unop $ (test_abs e3m4)
+  | ["abs"] => test_unop_multi $ (test_abs e3m4)
   | ["add"] => test_binop $ (test_add e3m4)
   | ["div"] => test_binop $ (test_div e3m4)
   | ["lt"] => test_binop $ (test_lt e3m4)
   | ["max"] => test_binop $ (test_max e3m4)
   | ["min"] => test_binop $ (test_min e3m4)
   | ["mul"] => test_binop $ (test_mul e3m4)
-  | ["neg"] => test_unop $ (test_neg e3m4)
+  | ["neg"] => test_unop_multi $ (test_neg e3m4)
   | ["rem"] => test_binop $ (test_rem e3m4)
-  | ["sqrt"] => test_unop $ (test_sqrt e3m4)
+  | ["sqrt"] => test_unop_multi $ (test_sqrt e3m4)
   | ["sub"] => test_binop $ (test_sub e3m4)
-  | ["roundToInt"] => test_unop $ (test_roundToInt e3m4)
+  | ["roundToInt"] => test_unop_multi $ (test_roundToInt e3m4)
   | _ => Thunk.pure []
 
 def main (args : List String) : IO Unit := do

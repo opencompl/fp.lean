@@ -92,6 +92,21 @@ void test_unop(std::string name,
   }
 }
 
+void test_unop_alt(std::string name, 
+  std::function<ubv(traits::rm, ubv)> f) {
+  for (traits::rm mode : modes) {
+    for (uint64_t i = 0; i < (1<<8); i++) {
+      for (uint64_t j = 0; j < (1<<8); j++) {
+          ubv packed1(8, i), packed2(8, j);
+          ubv result = f(mode, packed1);
+          std::cout << name << "," << to_mode(mode) << "," << \
+              to_bits(packed1) << "," << to_bits(packed2) << "," << \
+              to_bits(result, true) << "\n";
+      }
+    }
+  }
+}
+
 // Test binary operation on 8 bits (no rounding mode).
 void test_binop_noround(std::string name, 
   std::function<ubv(ubv, ubv)> f) {

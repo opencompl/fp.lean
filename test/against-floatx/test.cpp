@@ -32,6 +32,19 @@ void test_unop(std::string name, std::function<e5m2(e5m2)> f, std::string mode =
     }
 }
 
+void test_unop_alt(std::string name, std::function<e5m2(e5m2)> f, std::string mode = "RNE") {
+    for (uint16_t i = 0; i < (1<<8); i++) {
+        for (uint16_t j = 0; j < (1<<8); j++) {
+            e5m2 a = cons_fp8(static_cast<uint8_t>(i));
+            e5m2 b = cons_fp8(static_cast<uint8_t>(j));
+            e5m2 c = f(a);
+            std::cout << name << "," << "RNE" << "," << \
+                to_bits(a) << "," << to_bits(b) << "," << \
+                to_bits(c, true) << "\n";
+        }
+    }
+}
+
 void test_binop(std::string name, std::function<e5m2(e5m2,e5m2)> f) {
     for (uint16_t i = 0; i < (1<<8); i++) {
         for (uint16_t j = 0; j < (1<<8); j++) {
